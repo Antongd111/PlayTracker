@@ -20,8 +20,41 @@ La aplicación está desarrollada utilizando las siguientes tecnologías:
 
 - **Frontend**: **React Native** para crear una aplicación móvil multiplataforma que funcione tanto en Android como en iOS.
 - **API de Videojuegos**: La aplicación se conecta a la API de **RAWG** para obtener información sobre videojuegos en tiempo real.
-- **Backend en la Nube**: **Firebase** se utiliza para gestionar el almacenamiento de datos (bibliotecas y opiniones), así como para la autenticación de usuarios.
-- **Despliegue en la nube**: Firebase también facilita el despliegue y la sincronización en tiempo real, permitiendo una experiencia fluida de usuario.
+- **Backend**: **Node.js** y **Express** para gestionar la lógica de negocio y la creación de una API REST que maneje las operaciones de usuarios, videojuegos y opiniones.
+- **Despliegue en la nube**: El backend será desplegado en la nube permitiendo accesibilidad y escalabilidad de la aplicación.
 - **Control de versiones**: `git` para el control de versiones y **GitHub** como repositorio para almacenar el código y la documentación.
 
 ---
+
+## Instalación
+
+Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la aplicación está en desarollo y la instalación es susceptible a cambios si decido modificar algo en la estructura en tecnologías)**:
+
+1. **Clona el repositorio**:
+   ```bash
+   git clone https://github.com/Antongd111/AppJuegos-CC.git
+   ```
+   
+2. **Navega al directorio del proyecto**:
+   ```bash
+   cd AppJuegos-CC
+   ```
+
+3. **Instala las dependencias**:
+   ```bash
+   npm install
+   ```
+   
+4. **Configura las variables de entorno**:
+   Es necesaria una clave de la api de RAWG para el acceso. Inclúyela en rawgApiConfig.js.
+
+5. **Inicia el frontend**:
+   ```bash
+   npx react-native run-android
+   ```
+
+5. **Inicia el backend**:
+   ```bash
+   cd backend
+   npm start
+   ```

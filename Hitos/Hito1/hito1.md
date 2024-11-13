@@ -8,7 +8,7 @@ Esta aplicación permite a los usuarios hacer un seguimiento de los videojuegos 
 
 - **Bibliotecas de videojuegos**: Los usuarios pueden organizar sus videojuegos en distintas bibliotecas (ej.: Completados, En Progreso, Pendientes).
 - **Opiniones y calificaciones**: Posibilidad de agregar opiniones, comentarios y calificar cada videojuego.
-- **API de RAWG**: La aplicación utiliza la API de RAWG para obtener información detallada de cada videojuego, como descripciones, géneros, y capturas de pantalla.
+- **API de RAWG**: La aplicación utilizará la API de RAWG para obtener información detallada de cada videojuego, como descripciones, géneros, y capturas de pantalla.
 - **Gestión de usuarios y almacenamiento**: Firebase es utilizado para el backend de la aplicación, proporcionando autenticación de usuarios y almacenamiento de datos en la nube para que cada usuario tenga acceso a sus bibliotecas y opiniones de forma personalizada.
 - **Recomendación de juegos**: Posibilidad de recomendar videojuegos a usuarios añadidos como amigos.
 

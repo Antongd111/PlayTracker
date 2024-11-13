@@ -1,4 +1,4 @@
-# Gestión de Videojuegos - Seguimiento y Opiniones
+# PlayTracker - Seguimiento y Opiniones de videojuegos
 
 ## Descripción del Proyecto
 

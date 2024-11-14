@@ -26,4 +26,14 @@ Y se crea una carpeta con los archivos iniciales del código fuente. Tras reorga
 
 ![Estructura creada](../../Images/EntornoCreado.png)
 
-Teniendo ya el frontend creado, vamos con el backend.
+Teniendo ya el frontend creado, vamos con el backend. Como voy a utilizar Node.js con express, se inicializa de la siguiente forma.
+
+1. Se inicializa el archivo de dependencias y se instala express:
+   ```bash
+   npm init -y
+   npm install express dotenv morgan cors
+   ```
+
+2. Se crea el .gitignore para el backend para no trackear desde git los archivos de dependencias.
+
+Y con esto ya estaría la estructura de la aplicación creada. De momento, para el hito 1, voy a dejarlo aquí. Con esto ya tendría el entorno configurado, y quedaría empezar el desarrollo configurando el backend.

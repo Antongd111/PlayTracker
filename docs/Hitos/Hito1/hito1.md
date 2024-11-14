@@ -28,7 +28,7 @@ La aplicación está desarrollada utilizando las siguientes tecnologías:
 
 ## Instalación
 
-Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la aplicación está en desarollo y la instalación es susceptible a cambios si decido modificar algo en la estructura en tecnologías)**:
+Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la aplicación está en desarollo y la instalación es susceptible a cambios si decido modificar algo en la estructura en tecnologías. En el tiempo en el que se escribe este hito, aún no hay nada ejecutable, pero estos serán los pasos para ejecutarla en un futuro.)**:
 
 1. **Clona el repositorio**:
    ```bash
@@ -58,3 +58,7 @@ Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la apli
    cd backend
    npm start
    ```
+---
+
+## Anexo
+- [Creación y preparación del entorno de desarrollo y repositorio](preparacionEntorno.md)

@@ -39,12 +39,12 @@ Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la apli
 
 1. **Clona el repositorio**:
    ```bash
-   git clone https://github.com/Antongd111/AppJuegos-CC.git
+   git clone https://github.com/Antongd111/PlayTrack.git
    ```
    
 2. **Navega al directorio del proyecto**:
    ```bash
-   cd AppJuegos-CC
+   cd PlayTrack
    ```
 
 3. **Instala las dependencias**:
@@ -57,6 +57,7 @@ Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la apli
 
 5. **Inicia el frontend**:
    ```bash
+   cd frontend
    npx react-native run-android
    ```
 

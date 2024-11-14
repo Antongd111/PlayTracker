@@ -24,6 +24,6 @@ Para el frontend, utilizaré expo. Expo es un framework de React Native que ofre
 
 Y se crea una carpeta con los archivos iniciales del código fuente. Tras reorganizarlo un poco para tener la documentación de los hitos por un lado y el código por otro, ha quedado así:
 
-[Estructura creada](../../Images/EntornoCreado.png)
+![Estructura creada](../../Images/EntornoCreado.png)
 
 Teniendo ya el frontend creado, vamos con el backend.

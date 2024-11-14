@@ -14,6 +14,14 @@ Esta aplicación permite a los usuarios hacer un seguimiento de los videojuegos 
 
 ---
 
+### Principales ventajas del despliegue en la nube
+- Accesibilidad a la aplicación desde cualquier lugar con conexión a internet, sin necesidad de configuraciones locales del dispositivo.
+- Escalabilidad para el backend, permitiendo más flexibilidad al escalar recursos necesarios según la demanda.
+- Sincronización en tiempo real de los cambios que se hagan por parte de usuarios.
+- Mejor monitoreo del uso del servidor.
+
+---
+
 ## Tecnologías Utilizadas
 
 La aplicación está desarrollada utilizando las siguientes tecnologías:
@@ -21,12 +29,11 @@ La aplicación está desarrollada utilizando las siguientes tecnologías:
 - **Frontend**: **React Native** para crear una aplicación móvil multiplataforma que funcione tanto en Android como en iOS.
 - **API de Videojuegos**: La aplicación se conecta a la API de **RAWG** para obtener información sobre videojuegos en tiempo real.
 - **Backend**: **Node.js** y **Express** para gestionar la lógica de negocio y la creación de una API REST que maneje las operaciones de usuarios, videojuegos y opiniones.
-- **Despliegue en la nube**: El backend será desplegado en la nube permitiendo accesibilidad y escalabilidad de la aplicación.
 - **Control de versiones**: `git` para el control de versiones y **GitHub** como repositorio para almacenar el código y la documentación.
 
 ---
 
-## Instalación
+## Ejecución del entorno
 
 Para ejecutar esta aplicación en un entorno local, sigue estos pasos **(la aplicación está en desarollo y la instalación es susceptible a cambios si decido modificar algo en la estructura en tecnologías. En el tiempo en el que se escribe este hito, aún no hay nada ejecutable, pero estos serán los pasos para ejecutarla en un futuro.)**:
 

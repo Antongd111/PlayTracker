@@ -1,4 +1,5 @@
-# Gestión de Videojuegos - Seguimiento y Opiniones
+# PlayTracker - Seguimiento y Opiniones de videojuegos
+
 ## Descripción del Proyecto
 El objetivo de este proyecto es el desarrollo y despliegue en la nube de una aplicación para hacer un seguimiento y compartir opiniones sobre videojuegos con la comunidad, de forma que puedan encontrarse fácilmente otros juegos que puedan interesar al usuario en función de lo que ya ha jugado, además de poder llevar un seguimiento de los que ha jugado, los que está jugando y los que tiene pensado jugar. 
 La idea principal es crear una aplicación que haga lo mismo que Letterboxd hace con las películas en web, permitiendo tener un seguimiento y compartir opiniones, pero en este caso con videojuegos, ya que es un hobby muy extendido entre las generaciones más jóvenes y no hay ninguna aplicación conocida que ofrezca dichas funcionalidades.

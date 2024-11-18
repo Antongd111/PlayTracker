@@ -4,8 +4,8 @@ const { authenticateToken } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-router.post('/register', register); // Registrar usuario
-router.post('/login', login); // Iniciar sesión
-router.get('/protected', authenticateToken, protectedRoute); // Ruta protegida
+router.post('/register', register); // Register a new user
+router.post('/login', login); // Login user
+router.get('/protected', authenticateToken, protectedRoute); // Protected route
 
 module.exports = router;

@@ -1,16 +1,17 @@
 const express = require('express');
-const userRoutes = require('./routes/UserRoutes'); // Importar las rutas de usuarios
-require('dotenv').config(); // Leer variables de entorno
+const userRoutes = require('./routes/UserRoutes');
+const rawgRoutes = require('./routes/rawgRoutes');
+require('dotenv').config();
 
 const app = express();
 
 // Middlewares
-app.use(express.json()); // Para manejar datos JSON en las solicitudes
+app.use(express.json());
 
-// Rutas
-app.use('/api/users', userRoutes); // Registrar las rutas de usuario
+// Routes
+app.use('/api/users', userRoutes);
+app.use('/api/rawg', rawgRoutes);
 
-// Configurar el puerto
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

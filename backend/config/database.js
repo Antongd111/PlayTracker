@@ -1,7 +1,7 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
 
-// Crear una instancia de Sequelize
+// Create a new Sequelize instance
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
@@ -10,11 +10,11 @@ const sequelize = new Sequelize(
     host: process.env.DB_HOST,
     dialect: 'mysql',
     port: process.env.DB_PORT || 3306,
-    logging: false,
+    logging: console.log,
   }
 );
 
-// Verificar la conexión
+// Verify the connection
 sequelize
   .authenticate()
   .then(() => console.log('Database connected...'))

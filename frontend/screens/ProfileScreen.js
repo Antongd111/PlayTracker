@@ -2,11 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   
+  // User data
+  const [username, setUsername] = useState('');
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('user');
+
+      if (userData) {
+        const { username, statusMessage } = JSON.parse(userData);
+        setUsername(username);
+        setStatus(statusMessage || '');
+      }
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+
+  if (loading) {
+    return <ActivityIndicator size="large" style={styles.loadingIndicator} />;
+  }
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.profileHeader}>
@@ -14,8 +44,8 @@ export default function ProfileScreen() {
           <Icon name="person-circle-outline" size={100} color="#6A5ACD" />
         </View>
         <View style={styles.profileText}>
-          <Text style={styles.username}>Usuario</Text>
-          <Text style={styles.status}>Mensajito breve</Text>
+          <Text style={styles.username}>{username}</Text>
+          <Text style={styles.status}>{status}</Text>
         </View>
       </View>
 

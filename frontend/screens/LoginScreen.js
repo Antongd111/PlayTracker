@@ -13,10 +13,11 @@ const LoginScreen = () => {
     const handleLogin = async () => {
         try {
           // Send login request to backend
-          const { token } = await loginUser(email, password);
+          const { token, user } = await loginUser(email, password);
         
           // Save token in AsyncStorage
           await AsyncStorage.setItem('userToken', token);
+          await AsyncStorage.setItem('user', JSON.stringify(user));
 
           navigation.replace('App');
         } catch (error) {

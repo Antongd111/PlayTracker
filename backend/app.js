@@ -1,6 +1,7 @@
 const express = require('express');
 const userRoutes = require('./routes/UserRoutes');
 const rawgRoutes = require('./routes/rawgRoutes');
+const gameRoutes = require('./routes/gameRoutes');
 require('dotenv').config();
 const sequelize = require('./config/database');
 const User = require('./models/User');
@@ -14,6 +15,7 @@ app.use(express.json());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/rawg', rawgRoutes);
+app.use('/api/games', gameRoutes);
 
 // Sync database
 (async () => {

@@ -22,7 +22,7 @@ const UserGame = sequelize.define('UserGame', {
 });
 
 // Relaciones
-User.hasMany(UserGame, { foreignKey: 'userId' });
+User.hasMany(UserGame, { foreignKey: 'userId', onDelete: 'CASCADE' });
 UserGame.belongsTo(User, { foreignKey: 'userId' });
 
 module.exports = UserGame;

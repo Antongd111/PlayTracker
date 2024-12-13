@@ -3,16 +3,33 @@ import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator } from 'reac
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../services/api';
+import { getUserGames } from '../services/gamesService';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-  
+
   // User data
   const [username, setUsername] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
+  const [games, setGames] = useState([]);
 
+  const formatUserGames = (gamesData) => {
+    return gamesData.games.map(game => ({
+      id: game.id,
+      title: game.title,
+      status: game.status,
+      rawgGameId: game.rawgGameId,
+      userId: game.userId,
+      rawgDetails: {
+        ...game.rawgDetails
+      }
+    }));
+  };
+
+  /**
+   * Load user data from AsyncStorage
+   */
   const loadUserData = async () => {
     try {
       const userData = await AsyncStorage.getItem('user');
@@ -24,6 +41,26 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Error loading user data:', error);
+    }
+  };
+
+  /**
+   * Load user games from the backend
+   */
+  const loadUserGames = async () => {
+    try {
+      const userId = JSON.parse(await AsyncStorage.getItem('user')).id;
+
+      const games = await getUserGames(userId);
+
+      if (games) {
+        const formattedGames = formatUserGames(games);
+        console.log('Formatted Games:', formattedGames);
+        setGames(formattedGames);
+      }
+
+    } catch (error) {
+      console.error('Error loading user games:', error);
     } finally {
       setLoading(false);
     }
@@ -31,11 +68,21 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     loadUserData();
+    loadUserGames();
   }, []);
 
-  if (loading) {
-    return <ActivityIndicator size="large" style={styles.loadingIndicator} />;
-  }
+  /**
+   * Render each game card
+   */
+  const renderGameItem = ({ item }) => (
+    <View style={styles.gameCard}>
+      <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
+      <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
+      <Text style={styles.gameDate}>Released: {item.rawgDetails.released}</Text>
+      <Text style={styles.gameRating}>Rating: {item.rawgDetails.rating}</Text>
+      <Text style={styles.gameStatus}>Status: {item.status}</Text>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -63,18 +110,31 @@ export default function ProfileScreen() {
           <Text style={styles.optionText}>To play list</Text>
         </View>
       </View>
+
+      {/* Lista de juegos */}
+      {loading ? (
+        <ActivityIndicator size="large" color="#6A5ACD" style={styles.loadingIndicator} />
+      ) : (
+        <FlatList
+          data={games}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderGameItem}
+          numColumns={3}
+          contentContainerStyle={styles.gamesList}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-
+    flex: 1,
+    backgroundColor: '#fff',
   },
   profileHeader: {
     paddingBottom: '5%',
     paddingTop: '5%',
-    display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#cfcfcf',
@@ -84,7 +144,6 @@ const styles = StyleSheet.create({
     marginRight: '3%',
   },
   profileText: {
-    display: 'flex',
     flexDirection: 'column',
   },
   username: {
@@ -99,8 +158,6 @@ const styles = StyleSheet.create({
   optionsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    width: '100%',
-    alignSelf: 'center',
     backgroundColor: '#cfcfcf',
     padding: '3%',
   },
@@ -154,6 +211,11 @@ const styles = StyleSheet.create({
   gameRating: {
     fontSize: 12,
     color: '#888',
+    textAlign: 'center',
+  },
+  gameStatus: {
+    fontSize: 12,
+    color: '#444',
     textAlign: 'center',
   },
 });

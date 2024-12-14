@@ -99,13 +99,15 @@ export default function ProfileScreen() {
   const renderGameItem = ({ item }) => (
     <View style={[styles.gameCard, getCardStyle(item.status)]}>
       <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
-      <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
-      <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+      <View style={styles.gameInfo}>
+        <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
+        <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+      </View>
     </View>
   );
-
+  
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container]}>
       <View style={styles.profileHeader}>
         <Icon name="person-circle-outline" size={100} color="#00D9FF" />
         <View style={styles.profileText}>
@@ -113,33 +115,29 @@ export default function ProfileScreen() {
           <Text style={styles.status}>{status}</Text>
         </View>
       </View>
-
-      
-      <LinearGradient
-        colors={['#16213E', '#3b5998']}
-        style={styles.filtersContainer}
-      >
+  
+      <LinearGradient colors={['#16213E', '#3b5998']} style={styles.filtersContainer}>
         <TouchableOpacity onPress={() => handleFilterPress('All')}>
           <Animated.View style={[styles.option, filter === 'All' && styles.activeOption]}>
             <Icon name="list-outline" size={25} color={filter === 'All' ? '#FFD700' : '#00D9FF'} />
             <Text style={styles.optionText}>All</Text>
           </Animated.View>
         </TouchableOpacity>
-
+  
         <TouchableOpacity onPress={() => handleFilterPress('Completed')}>
           <Animated.View style={[styles.option, filter === 'Completed' && styles.activeOption]}>
             <Icon name="checkmark-done-outline" size={25} color={filter === 'Completed' ? '#FFD700' : '#00D9FF'} />
             <Text style={styles.optionText}>Completed</Text>
           </Animated.View>
         </TouchableOpacity>
-
+  
         <TouchableOpacity onPress={() => handleFilterPress('Playing')}>
           <Animated.View style={[styles.option, filter === 'Playing' && styles.activeOption]}>
             <Icon name="pulse-outline" size={25} color={filter === 'Playing' ? '#FFD700' : '#00D9FF'} />
             <Text style={styles.optionText}>Playing</Text>
           </Animated.View>
         </TouchableOpacity>
-
+  
         <TouchableOpacity onPress={() => handleFilterPress('Saved')}>
           <Animated.View style={[styles.option, filter === 'Saved' && styles.activeOption]}>
             <Icon name="receipt-outline" size={25} color={filter === 'Saved' ? '#FFD700' : '#00D9FF'} />
@@ -147,7 +145,7 @@ export default function ProfileScreen() {
           </Animated.View>
         </TouchableOpacity>
       </LinearGradient>
-
+  
       {loading ? (
         <ActivityIndicator size="large" color="#00D9FF" />
       ) : (
@@ -155,7 +153,6 @@ export default function ProfileScreen() {
           data={filteredGames}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderGameItem}
-          numColumns={3}
           contentContainerStyle={styles.gamesList}
         />
       )}
@@ -206,7 +203,9 @@ const styles = StyleSheet.create({
     borderColor: '#FFD700',
     shadowColor: '#FFD700',
     shadowOpacity: 0.8,
-    shadowRadius: 16,
+    shadowRadius: 10,
+    elevation: 40,
+    shadowOffset: { width: 0, height: 0 },
     borderWidth: 2,
   },
   optionText: {
@@ -218,27 +217,31 @@ const styles = StyleSheet.create({
     padding: 10,
   },
   gameCard: {
-    width: '30%',
+    flexDirection: 'row',
     padding: 10,
-    margin: 5,
+    marginBottom: 10,
     borderRadius: 8,
-    alignItems: 'center',
     borderWidth: 1,
+    alignItems: 'center',
   },
   gameImage: {
-    width: '100%',
+    width: 100,
     height: 80,
     borderRadius: 8,
+    marginRight: 15,
+  },
+  gameInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
   gameTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#F6F5F1',
-    textAlign: 'center',
   },
   gameDate: {
-    fontSize: 12,
+    fontSize: 14,
     color: '#F6F5F1',
-    textAlign: 'center',
+    marginTop: 5,
   },
 });

@@ -14,3 +14,29 @@ export const getUserGames = async (userId) => {
     throw error;
   }
 };
+
+/**
+ * Search games from the RAWG API with the provided query.
+ * 
+ * @param {*} query  The query to search for.
+ * @param {*} page  The page number.
+ * @param {*} pageSize  The number of games per page.
+ * @param {*} ordering  The ordering of the games.
+ * @returns 
+ */
+export const searchGames = async (query, page = 1, pageSize = 20, ordering = '') => {
+  try {
+    const response = await api.get('/rawg/search', {
+      params: {
+        q: query,
+        page,
+        pageSize,
+        ordering,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error searching games:', error);
+    throw error;
+  }
+};

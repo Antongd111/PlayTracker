@@ -4,7 +4,7 @@ const rawgService = require('../services/rawgService');
 const router = express.Router();
 
 // Get games endpoint
-router.get('/rawg', async (req, res) => {
+router.get('/search', async (req, res) => {
   const { q, page, pageSize, ordering } = req.query;
 
   try {

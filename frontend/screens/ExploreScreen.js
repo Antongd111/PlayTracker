@@ -1,12 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { searchGames } from '../services/gamesService';
+import { searchGames, getUserGames } from '../services/gamesService';
+import StarRating from '../components/StarRating';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const [games, setGames] = useState([]);
+  const [userGames, setUserGames] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Get user games on component mount
+  useEffect(() => {
+    const fetchUserGames = async () => {
+      try {
+        const userId = JSON.parse(await AsyncStorage.getItem('user')).id;
+        const response = await getUserGames(userId);
+    
+        // Extraemos la propiedad games
+        if (response && Array.isArray(response.games)) {
+          setUserGames(response.games);
+        } else {
+          console.error('userGames no es un array:', response);
+          setUserGames([]);
+        }
+      } catch (error) {
+        console.error('Error fetching user games:', error);
+        setUserGames([]);
+      }
+    };
+
+    fetchUserGames();
+  }, []);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -21,16 +47,42 @@ export default function ExploreScreen() {
     }
   };
 
-  const renderGameItem = ({ item }) => (
-    <View style={styles.gameCard}>
-      <Image source={{ uri: item.background_image }} style={styles.gameImage} />
-      <View style={styles.gameDetails}>
-        <Text style={styles.gameTitle}>{item.name}</Text>
-        <Text style={styles.gameDate}>{item.released}</Text>
-        <Text style={styles.gameRating}>Rating: {item.rating}</Text>
+  // Function that returns the status of a game
+  const getGameStatus = (gameId) => {
+    const userGame = userGames.find((ug) => ug.rawgGameId === gameId);
+    return userGame ? userGame.status : null;
+  };
+
+  // Function that returns the icon for the status of a game
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Completed':
+        return <Icon name="checkmark-circle" size={20} color="#39FF14" />;
+      case 'Playing':
+        return <Icon name="play-circle" size={20} color="#FFD700" />;
+      case 'Saved':
+        return <Icon name="bookmark" size={20} color="#E94560" />;
+      default:
+        return null;
+    }
+  };
+
+  const renderGameItem = ({ item }) => {
+    const status = getGameStatus(item.id);
+    return (
+      <View style={styles.gameCard}>
+        <Image source={{ uri: item.background_image }} style={styles.gameImage} />
+        <View style={styles.gameDetails}>
+          <Text style={styles.gameTitle}>{item.name}</Text>
+          <Text style={styles.gameDate}>{new Date(item.released).getFullYear()}</Text>
+          <StarRating rating={item.rating} />
+        </View>
+        <View style={styles.statusIcon}>
+          {getStatusIcon(status)}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -64,7 +116,7 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A2E',
+    backgroundColor: '#16213E',
     padding: 10,
   },
   searchContainer: {
@@ -103,6 +155,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     padding: 10,
     alignItems: 'center',
+    position: 'relative',
   },
   gameImage: {
     width: 100,
@@ -123,8 +176,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#A0A0A0',
   },
-  gameRating: {
-    fontSize: 14,
-    color: '#39FF14',
+  statusIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });

@@ -57,12 +57,16 @@ export default function ProfileScreen() {
     }
   };
 
+  useEffect(() => {
+    loadUserData();
+    loadUserGames();
+  }, []);
+
   const filteredGames = filter === 'All' ? games : games.filter(game => game.status === filter);
 
   const handleFilterPress = (selectedFilter) => {
     setFilter(selectedFilter);
 
-    // Trigger scale animation
     scaleAnim.setValue(1);
     Animated.sequence([
       Animated.timing(scaleAnim, {
@@ -78,36 +82,42 @@ export default function ProfileScreen() {
     ]).start();
   };
 
-  const getCardStyle = (status) => {
+  const getStatusIcon = (status) => {
     switch (status) {
       case 'Completed':
-        return { borderColor: '#39FF14' }; // Verde neón
+        return { name: 'checkmark-circle', color: '#39FF14' };
       case 'Playing':
-        return { borderColor: '#FFD700' }; // Amarillo neón
+        return { name: 'play-circle', color: '#FFD700' };
       case 'Saved':
-        return { borderColor: '#E94560' }; // Rojo neón
+        return { name: 'bookmark', color: '#E94560' };
       default:
-        return { borderColor: '#16213E' }; // Gris oscuro por defecto
+        return null;
     }
   };
 
-  useEffect(() => {
-    loadUserData();
-    loadUserGames();
-  }, []);
+  const getCountByStatus = (status) => {
+    return games.filter(game => game.status === status).length;
+  };
 
-  const renderGameItem = ({ item }) => (
-    <View style={[styles.gameCard, getCardStyle(item.status)]}>
-      <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
-      <View style={styles.gameInfo}>
-        <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
-        <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+  const renderGameItem = ({ item }) => {
+    const statusIcon = getStatusIcon(item.status);
+
+    return (
+      <View style={styles.gameCard}>
+        <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
+        <View style={styles.gameInfo}>
+          <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
+          <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+        </View>
+        {statusIcon && (
+          <Icon name={statusIcon.name} size={24} color={statusIcon.color} style={styles.statusIcon} />
+        )}
       </View>
-    </View>
-  );
-  
+    );
+  };
+
   return (
-    <View style={[styles.container]}>
+    <View style={styles.container}>
       <View style={styles.profileHeader}>
         <Icon name="person-circle-outline" size={100} color="#00D9FF" />
         <View style={styles.profileText}>
@@ -115,37 +125,37 @@ export default function ProfileScreen() {
           <Text style={styles.status}>{status}</Text>
         </View>
       </View>
-  
+
       <LinearGradient colors={['#16213E', '#3b5998']} style={styles.filtersContainer}>
         <TouchableOpacity onPress={() => handleFilterPress('All')}>
           <Animated.View style={[styles.option, filter === 'All' && styles.activeOption]}>
             <Icon name="list-outline" size={25} color={filter === 'All' ? '#FFD700' : '#00D9FF'} />
-            <Text style={styles.optionText}>All</Text>
+            <Text style={styles.optionText}>All ({games.length})</Text>
           </Animated.View>
         </TouchableOpacity>
-  
+
         <TouchableOpacity onPress={() => handleFilterPress('Completed')}>
           <Animated.View style={[styles.option, filter === 'Completed' && styles.activeOption]}>
             <Icon name="checkmark-done-outline" size={25} color={filter === 'Completed' ? '#FFD700' : '#00D9FF'} />
-            <Text style={styles.optionText}>Completed</Text>
+            <Text style={styles.optionText}>Completed ({getCountByStatus('Completed')})</Text>
           </Animated.View>
         </TouchableOpacity>
-  
+
         <TouchableOpacity onPress={() => handleFilterPress('Playing')}>
           <Animated.View style={[styles.option, filter === 'Playing' && styles.activeOption]}>
             <Icon name="pulse-outline" size={25} color={filter === 'Playing' ? '#FFD700' : '#00D9FF'} />
-            <Text style={styles.optionText}>Playing</Text>
+            <Text style={styles.optionText}>Playing ({getCountByStatus('Playing')})</Text>
           </Animated.View>
         </TouchableOpacity>
-  
+
         <TouchableOpacity onPress={() => handleFilterPress('Saved')}>
           <Animated.View style={[styles.option, filter === 'Saved' && styles.activeOption]}>
-            <Icon name="receipt-outline" size={25} color={filter === 'Saved' ? '#FFD700' : '#00D9FF'} />
-            <Text style={styles.optionText}>Saved</Text>
+            <Icon name="bookmark-outline" size={25} color={filter === 'Saved' ? '#FFD700' : '#00D9FF'} />
+            <Text style={styles.optionText}>Saved ({getCountByStatus('Saved')})</Text>
           </Animated.View>
         </TouchableOpacity>
       </LinearGradient>
-  
+
       {loading ? (
         <ActivityIndicator size="large" color="#00D9FF" />
       ) : (
@@ -186,7 +196,6 @@ const styles = StyleSheet.create({
   filtersContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#0F3460',
     paddingVertical: 10,
   },
   option: {
@@ -196,17 +205,10 @@ const styles = StyleSheet.create({
     borderColor: '#00D9FF',
     borderRadius: 10,
     backgroundColor: '#1A1A2E',
-    shadowRadius: 16,
   },
   activeOption: {
     backgroundColor: '#13100F',
     borderColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 40,
-    shadowOffset: { width: 0, height: 0 },
-    borderWidth: 2,
   },
   optionText: {
     marginTop: 5,
@@ -218,11 +220,14 @@ const styles = StyleSheet.create({
   },
   gameCard: {
     flexDirection: 'row',
-    padding: 10,
+    backgroundColor: '#0F3460',
+    borderRadius: 10,
     marginBottom: 10,
-    borderRadius: 8,
-    borderWidth: 1,
+    borderWidth: 2,
+    borderColor: '#FFD700',
+    padding: 10,
     alignItems: 'center',
+    position: 'relative',
   },
   gameImage: {
     width: 100,
@@ -243,5 +248,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#F6F5F1',
     marginTop: 5,
+  },
+  statusIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
   },
 });

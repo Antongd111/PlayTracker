@@ -209,6 +209,10 @@ const styles = StyleSheet.create({
   activeOption: {
     backgroundColor: '#13100F',
     borderColor: '#FFD700',
+    elevation: 30,
+    shadowColor: '#FFD700',
+    shadowOpacity: 0.6,
+    shadowRadius: 15,
   },
   optionText: {
     marginTop: 5,
@@ -228,6 +232,10 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     position: 'relative',
+    elevation: 20,
+    shadowColor: '#FFD700',
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
   },
   gameImage: {
     width: 100,

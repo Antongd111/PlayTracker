@@ -4,12 +4,15 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { searchGames, getUserGames } from '../services/gamesService';
 import StarRating from '../components/StarRating';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import GameInfoModal from '../components/GameInfoModal';
 
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
   const [games, setGames] = useState([]);
   const [userGames, setUserGames] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Get user games on component mount
   useEffect(() => {
@@ -17,8 +20,7 @@ export default function ExploreScreen() {
       try {
         const userId = JSON.parse(await AsyncStorage.getItem('user')).id;
         const response = await getUserGames(userId);
-    
-        // Extraemos la propiedad games
+
         if (response && Array.isArray(response.games)) {
           setUserGames(response.games);
         } else {
@@ -47,13 +49,11 @@ export default function ExploreScreen() {
     }
   };
 
-  // Function that returns the status of a game
   const getGameStatus = (gameId) => {
     const userGame = userGames.find((ug) => ug.rawgGameId === gameId);
     return userGame ? userGame.status : null;
   };
 
-  // Function that returns the icon for the status of a game
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Completed':
@@ -67,20 +67,46 @@ export default function ExploreScreen() {
     }
   };
 
+  const openModal = (game) => {
+    const formattedGame = {
+
+      id: game.id,
+      title: game.name,
+      status: getGameStatus(game.id),
+      rawgGameId: game.id,
+      rawgDetails: {
+        background_image: game.background_image || '',
+        name: game.name,
+        released: game.released || 'Unknown',
+        rating: game.rating || 'N/A',
+        description_raw: game.description_raw || 'No description available',
+      }
+    };
+  
+    setSelectedGame(formattedGame);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setSelectedGame(null);
+    setModalVisible(false);
+  };
+
   const renderGameItem = ({ item }) => {
     const status = getGameStatus(item.id);
+
     return (
-      <View style={styles.gameCard}>
-        <Image source={{ uri: item.background_image }} style={styles.gameImage} />
-        <View style={styles.gameDetails}>
-          <Text style={styles.gameTitle}>{item.name}</Text>
-          <Text style={styles.gameDate}>{new Date(item.released).getFullYear()}</Text>
-          <StarRating rating={item.rating} />
+      <TouchableOpacity onPress={() => openModal(item)}>
+        <View style={styles.gameCard}>
+          <Image source={{ uri: item.background_image }} style={styles.gameImage} />
+          <View style={styles.gameDetails}>
+            <Text style={styles.gameTitle}>{item.name}</Text>
+            <Text style={styles.gameDate}>{new Date(item.released).getFullYear()}</Text>
+            <StarRating rating={item.rating} />
+          </View>
+          <View style={styles.statusIcon}>{getStatusIcon(status)}</View>
         </View>
-        <View style={styles.statusIcon}>
-          {getStatusIcon(status)}
-        </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -109,6 +135,8 @@ export default function ExploreScreen() {
           contentContainerStyle={styles.gamesList}
         />
       )}
+
+      <GameInfoModal visible={modalVisible} onClose={closeModal} game={selectedGame} />
     </View>
   );
 }
@@ -150,12 +178,13 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     borderWidth: 2,
     borderColor: '#FFD700',
-    shadowColor: '#FFD700',
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
     padding: 10,
     alignItems: 'center',
     position: 'relative',
+    elevation: 7,
+    shadowColor: '#FFD700',
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
   },
   gameImage: {
     width: 100,

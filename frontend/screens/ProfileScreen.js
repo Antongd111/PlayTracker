@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserGames } from '../services/gamesService';
 import { LinearGradient } from 'expo-linear-gradient';
+import GameInfoModal from '../components/GameInfoModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -14,6 +15,8 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [games, setGames] = useState([]);
   const [filter, setFilter] = useState('All');
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -45,10 +48,20 @@ export default function ProfileScreen() {
 
   const loadUserGames = async () => {
     try {
-      const userId = JSON.parse(await AsyncStorage.getItem('user')).id;
-      const games = await getUserGames(userId);
-      if (games) {
-        setGames(formatUserGames(games));
+      const userData = await AsyncStorage.getItem('user');
+      if (!userData) {
+        console.error('No user data found');
+        return;
+      }
+  
+      const userId = JSON.parse(userData).id;
+      const gamesResponse = await getUserGames(userId);
+  
+      if (gamesResponse && gamesResponse.games) {
+        const formattedGames = formatUserGames(gamesResponse);
+        setGames(formattedGames); // 🔹 Ahora guardamos los juegos en el estado
+      } else {
+        console.error('No games found or response format incorrect', gamesResponse);
       }
     } catch (error) {
       console.error('Error loading user games:', error);
@@ -56,6 +69,7 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     loadUserData();
@@ -99,20 +113,33 @@ export default function ProfileScreen() {
     return games.filter(game => game.status === status).length;
   };
 
+  const openModal = (game) => {
+    setSelectedGame(game);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedGame(null);
+  };
+
+  
   const renderGameItem = ({ item }) => {
     const statusIcon = getStatusIcon(item.status);
-
+  
     return (
-      <View style={styles.gameCard}>
-        <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
-        <View style={styles.gameInfo}>
-          <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
-          <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+      <TouchableOpacity onPress={() => openModal(item)}>
+        <View style={styles.gameCard}>
+          <Image source={{ uri: item.rawgDetails.background_image }} style={styles.gameImage} />
+          <View style={styles.gameInfo}>
+            <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
+            <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
+          </View>
+          {statusIcon && (
+            <Icon name={statusIcon.name} size={24} color={statusIcon.color} style={styles.statusIcon} />
+          )}
         </View>
-        {statusIcon && (
-          <Icon name={statusIcon.name} size={24} color={statusIcon.color} style={styles.statusIcon} />
-        )}
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -155,6 +182,8 @@ export default function ProfileScreen() {
           </Animated.View>
         </TouchableOpacity>
       </LinearGradient>
+
+      <GameInfoModal visible={modalVisible} onClose={closeModal} game={selectedGame} />
 
       {loading ? (
         <ActivityIndicator size="large" color="#00D9FF" />
@@ -232,7 +261,7 @@ const styles = StyleSheet.create({
     padding: 10,
     alignItems: 'center',
     position: 'relative',
-    elevation: 20,
+    elevation: 35,
     shadowColor: '#FFD700',
     shadowOpacity: 0.8,
     shadowRadius: 10,

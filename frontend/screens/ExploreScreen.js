@@ -5,6 +5,7 @@ import { searchGames, getUserGames } from '../services/gamesService';
 import StarRating from '../components/StarRating';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GameInfoModal from '../components/GameInfoModal';
+import { updateGameStatus } from '../services/gamesService';
 
 export default function ExploreScreen() {
   const [query, setQuery] = useState('');
@@ -57,13 +58,59 @@ export default function ExploreScreen() {
   const getStatusIcon = (status) => {
     switch (status) {
       case 'Completed':
-        return <Icon name="checkmark-circle" size={20} color="#39FF14" />;
+        return <Icon name="checkmark-circle" size={25} color="#39FF14" />;
       case 'Playing':
-        return <Icon name="play-circle" size={20} color="#FFD700" />;
+        return <Icon name="play-circle" size={25} color="#FFD700" />;
       case 'Saved':
-        return <Icon name="bookmark" size={20} color="#E94560" />;
+        return <Icon name="bookmark" size={25} color="#E94560" />;
       default:
-        return null;
+        return <Icon name="bookmark-outline" size={25} color="#E94560" />;
+    }
+  };
+
+  const updateStatus = async (game) => {
+    const userGame = userGames.find((ug) => ug.rawgGameId === game.id);
+    const userData = await AsyncStorage.getItem('user');
+    const userId = JSON.parse(userData).id;
+  
+    let newStatus;
+    console.log('Current game status:', userGame?.status);
+  
+    switch (userGame?.status) {
+      case 'Completed':
+        newStatus = 'notSaved';
+        break;
+      case 'Playing':
+        newStatus = 'Completed';
+        break;
+      case 'Saved':
+        newStatus = 'Playing';
+        break;
+      default:
+        newStatus = 'Saved';
+        break;
+    }
+  
+    // Actualizar estado local antes de la llamada al backend
+    setUserGames((prevUserGames) =>
+      prevUserGames.map((g) =>
+        g.rawgGameId === game.id ? { ...g, status: newStatus } : g
+      )
+    );
+  
+    console.log('Updating game status:', game.id, newStatus);
+  
+    try {
+      await updateGameStatus(userId, game.id, newStatus);
+    } catch (error) {
+      console.error('Error updating game status:', error);
+  
+      // Revertir cambios locales si el backend falla
+      setUserGames((prevUserGames) =>
+        prevUserGames.map((g) =>
+          g.rawgGameId === game.id ? { ...g, status: userGame?.status } : g
+        )
+      );
     }
   };
 
@@ -104,7 +151,7 @@ export default function ExploreScreen() {
             <Text style={styles.gameDate}>{new Date(item.released).getFullYear()}</Text>
             <StarRating rating={item.rating} />
           </View>
-          <View style={styles.statusIcon}>{getStatusIcon(status)}</View>
+          <TouchableOpacity style={styles.statusIcon} onPress={() => updateStatus(item)}>{getStatusIcon(status)}</TouchableOpacity>
         </View>
       </TouchableOpacity>
     );

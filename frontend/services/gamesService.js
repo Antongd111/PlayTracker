@@ -1,6 +1,28 @@
 import api from './api';
 
 /**
+ * Add a game to the user with the provided userId.
+ * 
+ * @param {*} userId
+ * @param {*} rawgGameId
+ * @param {*} status
+ * @returns 
+ */
+
+export const updateGameStatus = async (userId, rawgGameId, status) => {
+  try {
+    const response = await api.post('/games/updateStatus', {
+      userId,
+      rawgGameId,
+      status,
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+
+/**
  * Get the games and their data for the user with the provided userId.
  * 
  * @param {*} userId 

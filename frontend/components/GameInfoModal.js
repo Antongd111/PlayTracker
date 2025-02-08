@@ -14,7 +14,6 @@ const GameInfoModal = ({ visible, onClose, game }) => {
           <ScrollView>
             <Text style={styles.modalTitle}>{game.rawgDetails.name}</Text>
             <Text style={styles.modalText}>Release Date: {new Date(game.rawgDetails.released).toDateString()}</Text>
-            <Text style={styles.modalText}>Status: {game.status}</Text>
             <Text style={styles.modalText}>Rating: {game.rawgDetails.rating}</Text>
             <Text style={styles.modalDescription}>{game.rawgDetails.description_raw}</Text>
           </ScrollView>

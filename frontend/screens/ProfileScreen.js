@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Image, FlatList, ActivityIndicator, TouchableOpacity, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native'; // Importación adicional
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getUserGames } from '../services/gamesService';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -9,7 +10,6 @@ import GameInfoModal from '../components/GameInfoModal';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
-
   const [username, setUsername] = useState('');
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(true);
@@ -21,15 +21,15 @@ export default function ProfileScreen() {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const formatUserGames = (gamesData) => {
-    return gamesData.games.map(game => ({
+    return gamesData.games.map((game) => ({
       id: game.id,
       title: game.title,
       status: game.status,
       rawgGameId: game.rawgGameId,
       userId: game.userId,
       rawgDetails: {
-        ...game.rawgDetails
-      }
+        ...game.rawgDetails,
+      },
     }));
   };
 
@@ -53,13 +53,13 @@ export default function ProfileScreen() {
         console.error('No user data found');
         return;
       }
-  
+
       const userId = JSON.parse(userData).id;
       const gamesResponse = await getUserGames(userId);
-  
+
       if (gamesResponse && gamesResponse.games) {
         const formattedGames = formatUserGames(gamesResponse);
-        setGames(formattedGames); // 🔹 Ahora guardamos los juegos en el estado
+        setGames(formattedGames);
       } else {
         console.error('No games found or response format incorrect', gamesResponse);
       }
@@ -69,14 +69,24 @@ export default function ProfileScreen() {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     loadUserData();
-    loadUserGames();
   }, []);
 
-  const filteredGames = filter === 'All' ? games : games.filter(game => game.status === filter);
+  useFocusEffect(
+    React.useCallback(() => {
+      const fetchGamesOnFocus = async () => {
+        setLoading(true);
+        await loadUserGames();
+        setLoading(false);
+      };
+
+      fetchGamesOnFocus();
+    }, [])
+  );
+
+  const filteredGames = filter === 'All' ? games : games.filter((game) => game.status === filter);
 
   const handleFilterPress = (selectedFilter) => {
     setFilter(selectedFilter);
@@ -110,7 +120,7 @@ export default function ProfileScreen() {
   };
 
   const getCountByStatus = (status) => {
-    return games.filter(game => game.status === status).length;
+    return games.filter((game) => game.status === status).length;
   };
 
   const openModal = (game) => {
@@ -123,10 +133,9 @@ export default function ProfileScreen() {
     setSelectedGame(null);
   };
 
-  
   const renderGameItem = ({ item }) => {
     const statusIcon = getStatusIcon(item.status);
-  
+
     return (
       <TouchableOpacity onPress={() => openModal(item)}>
         <View style={styles.gameCard}>
@@ -135,13 +144,12 @@ export default function ProfileScreen() {
             <Text style={styles.gameTitle}>{item.rawgDetails.name}</Text>
             <Text style={styles.gameDate}>{new Date(item.rawgDetails.released).getFullYear()}</Text>
           </View>
-          {statusIcon && (
-            <Icon name={statusIcon.name} size={24} color={statusIcon.color} style={styles.statusIcon} />
-          )}
+          {statusIcon && <Icon name={statusIcon.name} size={24} color={statusIcon.color} style={styles.statusIcon} />}
         </View>
       </TouchableOpacity>
     );
   };
+
 
   return (
     <View style={styles.container}>

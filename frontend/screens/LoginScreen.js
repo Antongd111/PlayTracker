@@ -6,8 +6,8 @@ import { useNavigation } from '@react-navigation/native';
 import {LinearGradient} from 'expo-linear-gradient';
 
 const LoginScreen = () => {
-  const [email, setEmail] = React.useState('');
-  const [password, setPassword] = React.useState('');
+  const [email, setEmail] = React.useState('test');
+  const [password, setPassword] = React.useState('test');
   const navigation = useNavigation();
 
   const handleLogin = async () => {
@@ -31,12 +31,14 @@ const LoginScreen = () => {
       <View style={styles.formContainer}>
         <Text style={styles.title}>Welcome back!</Text>
         <TextInput
+          value='test'
           style={styles.input}
           placeholder="Email"
           placeholderTextColor="#00D9FF"
           onChangeText={setEmail}
         />
         <TextInput
+          value='test'
           style={styles.input}
           placeholder="Password"
           placeholderTextColor="#00D9FF"

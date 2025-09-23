@@ -1,5 +1,6 @@
 package com.example.playtracker.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -87,8 +88,14 @@ class GameDetailViewModel : ViewModel() {
             isLoading = true
             error = null
             runCatching { gameApi.getGameDetails(gameId) }
-                .onSuccess { dto -> gameDetail = dto }
-                .onFailure { e -> error = e.message ?: "Error al cargar detalles" }
+                .onSuccess { dto ->
+                    gameDetail = dto
+                    Log.d("GameDetail", dto.toString())
+                }
+                .onFailure { e ->
+                    error = e.message ?: "Error al cargar detalles"
+                    Log.e("GameDetail", "Error cargando detalles", e)
+                }
             isLoading = false
         }
     }

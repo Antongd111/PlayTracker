@@ -50,6 +50,143 @@ import com.example.playtracker.ui.viewmodel.GameDetailViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Computer
+import androidx.compose.material.icons.filled.PhoneIphone
+import androidx.compose.material.icons.filled.Tablet
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+
+private fun formatDate(date: String?): String {
+    if (date.isNullOrBlank()) return "Sin fecha"
+    // Espera "YYYY-MM-DD"
+    val parts = date.split("-")
+    return if (parts.size == 3) "${parts[2]}-${parts[1]}-${parts[0]}" else date
+}
+
+private fun abbrevPlatform(name: String): String {
+    val n = name.lowercase()
+    return when {
+        "playstation 5" in n || "ps5" in n -> "PS5"
+        "playstation 4" in n || "ps4" in n -> "PS4"
+        "playstation 3" in n || "ps3" in n -> "PS3"
+        "xbox series" in n -> "XSX"
+        "xbox one" in n -> "XONE"
+        "xbox 360" in n -> "X360"
+        "nintendo switch" in n || "switch" in n -> "SW"
+        "wii u" in n -> "WiiU"
+        "wii" in n -> "Wii"
+        "pc" in n -> "PC"
+        "ios" in n -> "iOS"
+        "android" in n -> "Android"
+        "mac" in n || "macos" in n -> "macOS"
+        "linux" in n -> "Linux"
+        else -> name.take(10)
+    }
+}
+
+@Composable
+private fun platformContainerColor(name: String) = when {
+    name.contains("PlayStation", true) -> MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)
+    name.contains("Xbox", true)        -> MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f)
+    name.contains("Switch", true) ||
+            name.contains("Nintendo", true)    -> MaterialTheme.colorScheme.error.copy(alpha = 0.12f)
+    name.contains("PC", true) ||
+            name.contains("Linux", true) ||
+            name.contains("mac", true)         -> MaterialTheme.colorScheme.secondary.copy(alpha = 0.12f)
+    else                               -> MaterialTheme.colorScheme.surfaceVariant
+}
+
+@Composable
+private fun platformLabelColor() = MaterialTheme.colorScheme.onSurface
+
+@Composable
+private fun platformIcon(name: String) = when {
+    name.contains("PC", true) ||
+            name.contains("Linux", true) ||
+            name.contains("mac", true) -> Icons.Filled.Computer
+    name.contains("iOS", true) ||
+            name.contains("Android", true) -> Icons.Filled.PhoneIphone
+    name.contains("Switch", true) ||
+            name.contains("Nintendo", true) -> Icons.Filled.Tablet
+    else -> Icons.Filled.SportsEsports
+}
+
+@Composable
+private fun PlatformChip(name: String) {
+    AssistChip(
+        onClick = { /* no-op */ },
+        label = { Text(abbrevPlatform(name)) },
+        leadingIcon = {
+            Icon(
+                imageVector = platformIcon(name),
+                contentDescription = null
+            )
+        },
+        colors = AssistChipDefaults.assistChipColors(
+            labelColor = platformLabelColor(),
+            containerColor = platformContainerColor(name)
+        )
+    )
+}
+
+@Composable
+private fun PlatformsSection(platforms: List<String>) {
+    if (platforms.isEmpty()) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            platforms.forEach { p -> PlatformChip(p) }
+        }
+    }
+}
+
+@Composable
+private fun TextTagChip(text: String) {
+    AssistChip(
+        onClick = { /* no-op */ },
+        label = { Text(text) },
+        colors = AssistChipDefaults.assistChipColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            labelColor = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    )
+}
+
+@Composable
+private fun GenresSection(genres: List<String>) {
+    if (genres.isEmpty()) return
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            genres.forEach { g -> TextTagChip(g) }
+        }
+    }
+}
 
 @Composable
 fun GameDetailScreen(
@@ -185,11 +322,11 @@ fun GameDetailScreen(
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .align(Alignment.CenterHorizontally)
-                        .padding(horizontal = 16.dp)
+                        .padding(horizontal = 16.dp, vertical = 4.dp)
                 )
                 Text(
-                    text = gameDetail.releaseDate ?: "Sin fecha",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = formatDate(gameDetail.releaseDate),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
@@ -295,7 +432,44 @@ fun GameDetailScreen(
                     )
                 }
 
+                // ----- Plataformas -----
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Plataformas",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = 4.dp, vertical = 10.dp),
+                )
+                PlatformsSection(gameDetail.platforms)
+
+                // ----- Géneros -----
+                Text(
+                    text = "Géneros",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = 8.dp, vertical = 10.dp),
+                )
+                GenresSection(gameDetail.genres)
+
                 // -------- Descripción --------
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                    thickness = 1.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    text = "Descripción",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                )
                 var expanded by remember { mutableStateOf(false) }
                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                     Text(

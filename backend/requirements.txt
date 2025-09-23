@@ -22,3 +22,5 @@ scikit-learn
 scipy
 pandas
 joblib
+
+alembic

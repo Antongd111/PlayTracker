@@ -45,6 +45,10 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import kotlinx.coroutines.launch
 
 @Composable
 fun UserScreen(
@@ -63,6 +67,7 @@ fun UserScreen(
     val ui by viewModel.ui.collectAsState()
 
     var showEditDialog by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(userId, token) {
         viewModel.load(userId, token)
@@ -119,8 +124,34 @@ fun UserScreen(
                         }
 
                         if (ui.isOwn) {
-                            IconButton(onClick = { showEditDialog = true }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar perfil")
+                            Row {
+                                // Editar perfil
+                                IconButton(onClick = { showEditDialog = true }) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Editar perfil")
+                                }
+                                // Cerrar sesión
+                                IconButton(
+                                    onClick = {
+                                        scope.launch {
+                                            // Limpia credenciales (token, userId, etc.)
+                                            prefs.clear()
+
+                                            // Mensaje opcional
+                                            Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
+
+                                            // Navega a login y limpia el back stack del shell principal
+                                            navController.navigate("login") {
+                                                popUpTo("main") { inclusive = true }
+                                                launchSingleTop = true
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                                        contentDescription = "Cerrar sesión"
+                                    )
+                                }
                             }
                         }
                     }

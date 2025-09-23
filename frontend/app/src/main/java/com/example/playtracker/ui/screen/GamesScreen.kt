@@ -44,7 +44,7 @@ fun GamesScreen(navController: NavController) {
     LaunchedEffect(Unit) { viewModel.loadPopular() }
     LaunchedEffect(storedUserId) {
         storedUserId?.let { uid ->
-//            viewModel.loadRecommendations(uid)
+            viewModel.loadRecommendations(uid)
             viewModel.loadPlayedByFriends(uid)
         }
     }
@@ -137,10 +137,10 @@ fun GamesScreen(navController: NavController) {
                 // --- Recomendaciones (opcional) ---
                 if (recommendations.isNotEmpty()) {
                     item {
-                        HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp), thickness = 1.dp,
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp), thickness = 1.dp,
                             color = MaterialTheme.colorScheme.primary)
                         Text("Recomendados para ti", style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(top = 16.dp, bottom = 8.dp))
+                            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(bottom = 8.dp))
                     }
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

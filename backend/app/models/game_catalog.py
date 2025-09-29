@@ -9,10 +9,9 @@ class GameCatalog(Base):
     name = Column(String, nullable=False)
 
     # listas serializadas por ';'
-    genres = Column(String, nullable=True)      # "Action;RPG;Indie"
-    tags = Column(String, nullable=True)        # "Pixel Graphics;Souls-like"
-    platforms = Column(String, nullable=True)   # "PC;PlayStation 5"
+    genres = Column(String, nullable=True)
+    tags = Column(String, nullable=True)
+    platforms = Column(String, nullable=True)
 
-    # opcional, para popularidad / cold-start
     metacritic = Column(Integer, nullable=True)
-    rating = Column(Float, nullable=True)       # rating global RAWG si lo usas
+    rating = Column(Float, nullable=True)

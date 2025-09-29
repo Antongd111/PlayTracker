@@ -8,7 +8,7 @@ from app.core.security import get_password_hash, verify_password, create_access_
 
 router = APIRouter()
 
-# Endpoint para registrar un nuevo usuario (devolverá 201 Created si se crea correctamente)
+# Nuevo usuario
 @router.post("/register", status_code=201)
 async def register(user: UserRegister, db: AsyncSession = Depends(get_async_session)):
     
@@ -36,7 +36,7 @@ async def register(user: UserRegister, db: AsyncSession = Depends(get_async_sess
     # Se devuelve el id del usuario como respuesta
     return {"message": "Usuario registrado con éxito", "id": new_user.id}
 
-# Endpoint para inicio de sesión
+# Inicio de sesión
 @router.post("/login")
 async def login(user: UserLogin, db: AsyncSession = Depends(get_async_session)):
     result = await db.execute(select(User).where(User.email == user.email))

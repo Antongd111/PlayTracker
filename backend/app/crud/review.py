@@ -10,7 +10,7 @@ from app.models.user_game import UserGame
 from app.models.user import User
 from app.models.review_like import ReviewLike
 
-# ---------- Upsert reseña (crea o edita) ----------
+# ---------- Actualizar/Crear reseña ----------
 async def upsert_review(
     db: AsyncSession,
     user_id: int,
@@ -31,7 +31,7 @@ async def upsert_review(
         ug = UserGame(
             user_id=user_id,
             game_rawg_id=game_rawg_id,
-            status="wishlist",  # o el que uses por defecto
+            status="wishlist",
         )
         db.add(ug)
 
@@ -63,10 +63,9 @@ async def get_game_reviews_stats(
 async def list_reviews_for_game(
     db: AsyncSession,
     game_rawg_id: int,
-    viewer_user_id: int,   # para calcular liked_by_me
+    viewer_user_id: int,
     limit: int = 20,
 ) -> List[Dict[str, Any]]:
-    # subquery: likes por reseña
     likes_cnt_sq = (
         select(
             ReviewLike.review_user_id.label("ru"),
@@ -78,7 +77,6 @@ async def list_reviews_for_game(
         .subquery()
     )
 
-    # subquery: liked_by_me
     liked_by_me_sq = (
         select(
             ReviewLike.review_user_id.label("ru"),
@@ -129,7 +127,6 @@ async def like_review(
     author_user_id: int,
     game_rawg_id: int,
 ) -> bool:
-    # verificar que existe la reseña (fila en user_games)
     exists_q = select(UserGame.user_id).where(
         (UserGame.user_id == author_user_id) &
         (UserGame.game_rawg_id == game_rawg_id)
@@ -161,5 +158,4 @@ async def unlike_review(
         )
     )
     await db.commit()
-    # res.rowcount puede ser None con asyncpg; devolvemos True de forma idempotente
     return True

@@ -11,6 +11,7 @@ async def get_db():
     async with SessionLocal() as session:
         yield session
 
+# Obtener UserGame
 @router.get("/{game_id}", response_model=UserGameOut)
 async def get_game(user_id: int, game_id: int, db: AsyncSession = Depends(get_db)):
     game = await crud.get_user_game(db, user_id, game_id)

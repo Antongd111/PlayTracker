@@ -14,9 +14,9 @@ class UserGame(Base):
     image_url = Column(String, nullable=True)
     release_year = Column(Integer, nullable=True)
 
-    status = Column(String)        # "jugando", "terminado", etc.
-    score = Column(Integer)        # nota del usuario
-    notes = Column(String)         # comentario personal
+    status = Column(String)
+    score = Column(Integer)
+    notes = Column(String)
     added_at = Column(DateTime, default=datetime.utcnow)
     review_updated_at = Column(DateTime(timezone=True), nullable=True)
     contains_spoilers = Column(Boolean, nullable=False, default=False, server_default="false")

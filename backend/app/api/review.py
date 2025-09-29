@@ -8,6 +8,7 @@ from app.models.user import User
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
+# Actualizar review
 @router.put("/{game_rawg_id}", response_model=ReviewOut)
 async def upsert_review(
     game_rawg_id: int,
@@ -37,6 +38,7 @@ async def upsert_review(
         liked_by_me=False,
     )
 
+# Obtener reviews de un juego
 @router.get("/game/{game_rawg_id}", response_model=GameReviewsResponse)
 async def list_reviews_for_game(
     game_rawg_id: int,
@@ -69,6 +71,7 @@ async def list_reviews_for_game(
         ],
     )
 
+# Dar Like a una review
 @router.post("/{game_rawg_id}/{author_user_id}/like")
 async def like_review(
     game_rawg_id: int,
@@ -83,6 +86,7 @@ async def like_review(
         raise HTTPException(status_code=404, detail="Review not found")
     return {"ok": True}
 
+# Borrar una review
 @router.delete("/{game_rawg_id}/{author_user_id}/like")
 async def unlike_review(
     game_rawg_id: int,

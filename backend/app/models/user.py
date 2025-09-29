@@ -13,5 +13,4 @@ class User(Base):
     avatar_url = Column(String)
     favorite_rawg_game_id = Column(BigInteger, nullable=True)
     
-    # Relación con los juegos del usuario
     games = relationship("UserGame", back_populates="user")

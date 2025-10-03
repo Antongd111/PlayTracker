@@ -1,7 +1,9 @@
-<p align="left" style="display:flex; align-items:center; gap:20px;">
-  <img src="doc/images/logo.png" alt="PlayTracker logo" width="80" style="margin-right:20px;"/>
-  <span style="font-size:2em; font-weight:bold;">PlayTracker</span>
+<p align="center">
+  <img src="doc/images/logo.png" alt="PlayTracker logo" width="120"/>
 </p>
+
+<h1 align="center">PlayTracker</h1>
+
 No podemos negar que la industria del videojuego en la actualidad, además de ser la que más dinero genera, es cada vez más popular. Jugar a videojuegos cada vez está menos estigmatizado, y desde hace ya unos años comenzamos a ver historias adultas con niveles de producción de las grandes películas de Hollywood, y otros que, aunque menos ambiciosos, podríamos considerar obras de arte.
 
 La visión artística de los videojuegos, además de sus características técnicas y la gran variedad de géneros que existen, hacen que sean un campo muy susceptible a opiniones muy diversas. Sin embargo, no existe ninguna aplicación consolidada que permita hacer un seguimiento de los videojuegos que hemos jugado, compartir opiniones y contactar con otros jugadores con gustos similares.

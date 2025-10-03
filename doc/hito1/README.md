@@ -1,6 +1,7 @@
+# Hito 1: Repositorio de pácticas y definición del proyecto
 Como la aplicación ya está desarrollada y en GitHub, he hecho una nueva rama para la asignatura (no me deja hacer fork porque el proyecto es mío). En este documento describiré cómo está desarrollada la aplicación, los principales problemas que tiene ahora, y soluciones propuestas a dichos problemas que implementaré a lo largo de la asignatura. También incluyo un epígrafe con los beneficios de la migración de la aplicación a la nube.
 
-Los objetivos de desarrollo los gestionaré mediante Issues de Github.
+La descripción del proyecto ya está descrita en el README de la raíz del proyecto, por lo que en este documento describiré exclusivamente lo descrito en el párrafo anterior.
 
 ## 1. Tecnologías utilizadas
 - La aplicación está desarrollada en <b>Kotlin</b>, de forma nativa para Android.<br></br>

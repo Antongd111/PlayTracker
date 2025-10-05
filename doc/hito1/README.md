@@ -1,5 +1,7 @@
 # Hito 1: Repositorio de pácticas y definición del proyecto
-Como la aplicación ya está desarrollada y en GitHub, he hecho una nueva rama para la asignatura (no me deja hacer fork porque el proyecto es mío). En este documento describiré cómo está desarrollada la aplicación, los principales problemas que tiene ahora, y soluciones propuestas a dichos problemas que implementaré a lo largo de la asignatura. También incluyo un epígrafe con los beneficios de la migración de la aplicación a la nube.
+Como la aplicación ya está desarrollada y en GitHub, he hecho una nueva rama para la asignatura (no me deja hacer fork porque el proyecto es mío). En este documento describiré cómo está desarrollada la aplicación, los principales problemas que tiene ahora, y soluciones propuestas a dichos problemas que implementaré a lo largo de la asignatura. También incluyo un epígrafe con los beneficios de la migración de la aplicación a la nube. 
+
+> <b>NOTA: Aunque este hito se centra en la creación y configuración del proyecto, al estar ya creado el proyecto y configurado el entorno y mi GitHub, me he centrado más en los problemas y soluciones propuestas, además de los beneficios de la migración a la nube. He creado nuevos Issues de los problemas descritos, y pueden verse todos los issues ya cerrados que creé en el desarrollo de la app.</b>
 
 La descripción del proyecto ya está descrita en el README de la raíz del proyecto, por lo que en este documento describiré exclusivamente lo descrito en el párrafo anterior.
 

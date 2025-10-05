@@ -61,3 +61,24 @@ De una forma simple e informal, en el siguiente diagrama podemos ver como está 
 Para el backend, por otra parte, he dividido la declaración de los endpoints (carpeta API) de la lógica (en la carpeta crud, llamada repositories en el diagrama). Como vemos, las funciones descritas en los repositorios hacen peticiones tanto a mi propia BD para obtener información de usuarios y caché de juegos como a RAWG para obtener información de los juegos.
 
 ![alt text](../images/diagrama_arquitectura.png)
+
+La estructura de directorios real del backend en el momento en el que escribo esto es la siguiente, aunque cambiará a lo largo de la asignatura:
+```
+backend/
+├── __pycache__/
+├── .venv/
+├── alembic/
+├── app/
+│   ├── api/
+│   ├── core/
+│   ├── crud/
+│   ├── models/
+│   └── schemas/
+├── venv/
+├── .env
+├── .gitignore
+├── alembic.ini
+├── docker-compose.yml
+├── main.py
+└── requirements.txt
+```

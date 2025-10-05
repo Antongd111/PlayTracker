@@ -28,3 +28,7 @@ A continuación muestro capturas de pantalla de la aplicación a día de hoy, pa
 ## Desarrollo de la asignatura
 La documentación específica al desarrollo de los hitos de la asignatura está descrita en el documento de cada hito:
 1. [Repositorio de pácticas y definición del proyecto](doc/hito1/README.md)
+
+## Licencia
+Este proyecto está bajo la licencia MIT.  
+Consulta el archivo [LICENSE](LICENSE) para más información.

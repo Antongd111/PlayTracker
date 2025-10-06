@@ -1,54 +1,34 @@
-# PlayTracker
+<p align="center">
+  <img src="doc/images/logo.png" alt="PlayTracker logo" width="120"/>
+</p>
 
-PlayTracker es una aplicación desarrollada en Kotlin que permite a los usuarios gestionar su biblioteca de videojuegos, permitiendo añadir los videojuegos a la biblioteca para llevar un seguimiento de los mismos, buscar información de ellos, encontrar videojuegos relacionados y ver bibliotecas de amigos, entre otras funciones.
+<h1 align="center">PlayTracker</h1>
 
-Se implementará un sistema de recomendación de videojuegos basado en los que ha jugado el usuario, permitiendo descubrir nuevos juegos que podrían interesar.
+No podemos negar que la industria del videojuego en la actualidad, además de ser la que más dinero genera, es cada vez más popular. Jugar a videojuegos cada vez está menos estigmatizado, y desde hace ya unos años comenzamos a ver historias adultas con niveles de producción de las grandes películas de Hollywood, y otros que, aunque menos ambiciosos, podríamos considerar obras de arte.
 
-La aplicación utiliza la api de RAWG, que contiene información actualizada de todos los videojuegos disponibles en todas las plataformas.
+La visión artística de los videojuegos, además de sus características técnicas y la gran variedad de géneros que existen, hacen que sean un campo muy susceptible a opiniones muy diversas. Sin embargo, no existe ninguna aplicación consolidada que permita hacer un seguimiento de los videojuegos que hemos jugado, compartir opiniones y contactar con otros jugadores con gustos similares.
 
-## Instalación
+Esto es lo que me llevó a desarrollar PlayTracker, una aplicación con la que podemos tener en el bolsillo todo nuestro recorrido por el mundo de los videojuegos, permitiéndonos:
+- Obtener información de cualquier juego de cualquier plataforma, todo en el mismo lugar.
+- Tener nuestra propia biblioteca de videojuegos, donde podemos cambiar el estado de los mismos (por jugar, jugando, completado).
+- Crear y compartir valoraciones de los juegos, con un sistema de estrellas (de 1 a 5) y un texto tipo reseña.
+- Obtener recomendaciones en base a los juegos de nuestra biblioteca y las valoraciones aportadas a cada uno.
+- Conectar con otros usuarios para descubrir qué juegan, sus títulos favoritos y sus reseñas.
 
-### 1. Clona el repositorio
+La aplicación ya está desarrollada y es completamente funcional, a excepción de que no dispongo de un entorno donde alojar el backend para que funcione correctamente, sin cortes y sin necesidad de tener un equipo propio funcionando siempre para ofrecer el servicio.
 
-```bash
-git clone https://github.com/Antongd111/GIDM-PlayTracker.git
-```
+Es por ello que, aprovechando esta asignatura, voy a migrar la aplicación a la nube, añadiendo nuevas funcionalidades. Además, voy a refactorizar la mayor parte del código para simplificar los endpoints de la API, adaptarlo a los requisitos de un entorno en la nube, y seguir las buenas prácticas descritas en los guiones.`
 
-### 2. Crea el entorno virtual (venv)
+A continuación muestro capturas de pantalla de la aplicación a día de hoy, para que se vean sus funcionalidades:
 
-```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate  # En Windows
-```
+![Playtracker captura 2](doc/images/playtracker2.png)
+![Playtracker captura 1](doc/images/playtracker1.png)
+![Playtracker captura 3](doc/images/playtracker3.png)
 
-### 3. Instala las dependencias
-```bash
-pip install -r requirements.txt
-```
+## Desarrollo de la asignatura
+La documentación específica al desarrollo de los hitos de la asignatura está descrita en el documento de cada hito:
+1. [Repositorio de pácticas y definición del proyecto](doc/hito1/README.md)
 
-### 4. Crea el archivo con las variables de entorno (.env)
-En la raíz del backend, crea un archivo .env con las siguientes variables:
-```bash
-SECRET_KEY=
-ACCESS_TOKEN_EXPIRE_MINUTES=60
-ALGORITHM=HS256
-DATABASE_URL=postgresql+asyncpg://playtracker:playtracker@localhost:5432/playtracker
-```
-
-### 5. Crea el contenedor con la base de datos
-Asegúrate de tener el demonio de Docker corriendo en el sistema, y ejecuta en la raíz del backend:
-```bash
-docker-compose up -d
-```
-
-Esto inicia un contenedor con la base de datos, con los siguientes parámetros:
-- Usuario: playtracker
-- Contraseña: playtracker
-- Base de datos: playtracker
-- Puerto: 5432
-
-### 6. Ejecutar el servidor en desarrollo
-```bash
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
+## Licencia
+Este proyecto está bajo la licencia MIT.  
+Consulta el archivo [LICENSE](LICENSE) para más información.

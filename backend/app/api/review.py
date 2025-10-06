@@ -3,10 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db, get_current_user
 from app.schemas.review import ReviewUpsertIn, ReviewOut, GameReviewsResponse
-from app.crud import review as crud_review
+from app.services import review as service
 from app.models.user import User
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
+
+# ENDPOINTS ------------------------------------------------------------------
 
 # Actualizar review
 @router.put("/{game_rawg_id}", response_model=ReviewOut)
@@ -16,7 +18,7 @@ async def upsert_review(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    ug = await crud_review.upsert_review(
+    ug = await service.upsert_review(
         db=db,
         user_id=current_user.id,
         game_rawg_id=game_rawg_id,
@@ -46,8 +48,8 @@ async def list_reviews_for_game(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    avg, cnt = await crud_review.get_game_reviews_stats(db, game_rawg_id)
-    rows = await crud_review.list_reviews_for_game(
+    avg, cnt = await service.get_game_reviews_stats(db, game_rawg_id)
+    rows = await service.list_reviews_for_game(
         db, game_rawg_id, viewer_user_id=current_user.id, limit=limit
     )
 
@@ -79,14 +81,14 @@ async def like_review(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    ok = await crud_review.like_review(
+    ok = await service.like_review(
         db, liker_user_id=current_user.id, author_user_id=author_user_id, game_rawg_id=game_rawg_id
     )
     if not ok:
         raise HTTPException(status_code=404, detail="Review not found")
     return {"ok": True}
 
-# Borrar una review
+# Borrar Like de una review
 @router.delete("/{game_rawg_id}/{author_user_id}/like")
 async def unlike_review(
     game_rawg_id: int,
@@ -94,7 +96,7 @@ async def unlike_review(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    await crud_review.unlike_review(
+    await service.unlike_review(
         db, liker_user_id=current_user.id, author_user_id=author_user_id, game_rawg_id=game_rawg_id
     )
     return {"ok": True}

@@ -8,7 +8,9 @@ from app.core.security import get_password_hash, verify_password, create_access_
 
 router = APIRouter()
 
-# Nuevo usuario
+# ENDPOINTS ------------------------------------------------------------------
+
+# Registrar nuevo usuario
 @router.post("/register", status_code=201)
 async def register(user: UserRegister, db: AsyncSession = Depends(get_async_session)):
     

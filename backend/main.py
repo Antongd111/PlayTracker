@@ -1,6 +1,7 @@
+from app.api import friendships
 from fastapi import FastAPI
 from app.core.init_db import init_db
-from app.api import users, user_games, auth, rawg, friends, review, recommendations
+from app.api import users, user_games, auth, rawg, review, users_recommendations, user_friends
 
 app = FastAPI()
 
@@ -12,10 +13,10 @@ app.include_router(users.router)
 app.include_router(user_games.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(rawg.router, prefix="/rawg", tags=["rawg"])
-app.include_router(friends.router)
+app.include_router(friendships.router)
 app.include_router(review.router)
-app.include_router(recommendations.router)
-
+app.include_router(users_recommendations.router)
+app.include_router(user_friends.users_friends_router)
 
 @app.get("/")
 def root():

@@ -5,22 +5,28 @@ from app.core.rawg import search_games, get_game_details, get_popular_games, get
 from app.schemas.game import GameDetailResponse
 
 from app.core.dependencies import get_db
-from app.crud.game_catalog import upsert_game_catalog
+from app.services.game_catalog import upsert_game_catalog
 
 router = APIRouter()
 
+# ENDPOINTS ------------------------------------------------------------------
+
+# Obtener juegos por búsqueda
 @router.get("/games/search")
 async def search(query: str = Query(..., min_length=1)):
     return await search_games(query)
 
+# Obtener juegos populares
 @router.get("/games/popular")
 async def popular_games(page: int = 1):
     return await get_popular_games(page)
 
+# Obtener géneros
 @router.get("/games/genres")
 async def genres():
     return await get_genres()
 
+# Obtener detalles de un juego (y guardarlo en el catálogo si no existe)
 @router.get("/games/{game_id}", response_model=GameDetailResponse)
 async def get_game(game_id: int):
     return await get_game_details(game_id)

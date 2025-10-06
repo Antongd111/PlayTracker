@@ -2,12 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from app.core.database import SessionLocal
-from app.schemas.user import UserOut, UserCreate, UserUpdate, FavoriteUpdate
+from app.schemas.user import UserOut, UserCreate, UserUpdate
 from app.services import user as service
 from app.core.dependencies import get_current_user
 from app.models.user import User
-from app.schemas.game import GamePreview
-from app.services.user import get_friends_games
 
 router = APIRouter(prefix="/users", tags=["users"])
 

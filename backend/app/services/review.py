@@ -10,7 +10,11 @@ from app.models.user_game import UserGame
 from app.models.user import User
 from app.models.review_like import ReviewLike
 
-# ---------- Actualizar/Crear reseña ----------
+
+# ----------------------------------------------------------------------
+# Upsert de reseña (crear/actualizar)
+# ----------------------------------------------------------------------
+
 async def upsert_review(
     db: AsyncSession,
     user_id: int,
@@ -19,6 +23,26 @@ async def upsert_review(
     notes: Optional[str],
     contains_spoilers: bool,
 ) -> UserGame:
+    """
+    Crea o actualiza la reseña (score/notes/spoilers) de un usuario para un juego.
+
+    - Si el usuario no tiene registro en `UserGame` para `game_rawg_id`, lo crea
+      con un estado por defecto.
+    - Actualiza `score`, `notes`, `contains_spoilers` y marca `review_updated_at`
+      con el momento actual en UTC.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        user_id (int): ID del autor de la reseña.
+        game_rawg_id (int): Identificador del juego en RAWG.
+        score (Optional[int]): Puntuación (puede ser None para “sin puntuación”).
+        notes (Optional[str]): Texto libre de la reseña (puede ser None).
+        contains_spoilers (bool): Indicador de si el texto contiene spoilers.
+
+    Returns:
+        UserGame: Registro de `UserGame` actualizado con los datos de la reseña.
+    """
+    
     now = datetime.now(timezone.utc)
 
     q = select(UserGame).where(
@@ -31,7 +55,7 @@ async def upsert_review(
         ug = UserGame(
             user_id=user_id,
             game_rawg_id=game_rawg_id,
-            status="wishlist",
+            status="wishlist",  # estado por defecto cuando no existía relación previa
         )
         db.add(ug)
 
@@ -44,11 +68,28 @@ async def upsert_review(
     await db.refresh(ug)
     return ug
 
-# ---------- Métricas (media y conteo) ----------
+
+# ----------------------------------------------------------------------
+# Métricas agregadas de reseñas (media y conteo)
+# ----------------------------------------------------------------------
+
 async def get_game_reviews_stats(
     db: AsyncSession,
     game_rawg_id: int,
 ) -> tuple[Optional[float], int]:
+    """
+    Calcula la media de puntuación y el número de reseñas con puntuación para un juego.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        game_rawg_id (int): Identificador del juego en RAWG.
+
+    Returns:
+        tuple[Optional[float], int]:
+            - media (float o None si no hay puntuaciones)
+            - conteo de reseñas con puntuación (int)
+    """
+
     q = select(
         func.avg(UserGame.score).label("avg"),
         func.count().label("cnt"),
@@ -59,13 +100,39 @@ async def get_game_reviews_stats(
     avg, cnt = res.fetchone()
     return (float(avg) if avg is not None else None, int(cnt or 0))
 
-# ---------- Listado de reseñas de un juego ----------
+
+# ----------------------------------------------------------------------
+# Listado de reseñas de un juego (con likes y “liked_by_me”)
+# ----------------------------------------------------------------------
+
 async def list_reviews_for_game(
     db: AsyncSession,
     game_rawg_id: int,
     viewer_user_id: int,
     limit: int = 20,
 ) -> List[Dict[str, Any]]:
+    """
+    Lista reseñas de un juego con metadatos (autor, avatar, likes y si el viewer le dio like).
+
+    - Incluye `likes_count` por reseña usando una subconsulta agregada.
+    - La bandera `liked_by_me` indica si el usuario `viewer_user_id` ha dado like
+      a esa reseña.
+    - Ordena por `review_updated_at` descendente (nulls last) y limita el resultado.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        game_rawg_id (int): Identificador del juego en RAWG.
+        viewer_user_id (int): ID del usuario que visualiza (para calcular `liked_by_me`).
+        limit (int): Máximo de reseñas a devolver (por defecto 20).
+
+    Returns:
+        List[Dict[str, Any]]: Lista de filas mapeadas con:
+            - user_id, game_rawg_id, score, notes, contains_spoilers, review_updated_at
+            - username, avatar_url
+            - likes_count (int)
+            - liked_by_me (bool)
+    """
+
     likes_cnt_sq = (
         select(
             ReviewLike.review_user_id.label("ru"),
@@ -120,13 +187,34 @@ async def list_reviews_for_game(
     res = await db.execute(q)
     return res.mappings().all()
 
-# ---------- Like / Unlike ----------
+
+# ----------------------------------------------------------------------
+# Likes de reseñas (like / unlike)
+# ----------------------------------------------------------------------
+
 async def like_review(
     db: AsyncSession,
     liker_user_id: int,
     author_user_id: int,
     game_rawg_id: int,
 ) -> bool:
+    """
+    Registra un 'like' de `liker_user_id` sobre la reseña de `author_user_id` y `game_rawg_id`.
+
+    - Verifica primero que exista la reseña (registro en UserGame para el autor).
+    - Inserta el like en `ReviewLike` de forma idempotente (ON CONFLICT DO NOTHING).
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        liker_user_id (int): Usuario que da like.
+        author_user_id (int): Autor de la reseña.
+        game_rawg_id (int): Juego al que pertenece la reseña.
+
+    Returns:
+        bool: `True` si se confirmó la operación (o ya existía el like),
+              `False` si la reseña no existe.
+    """
+
     exists_q = select(UserGame.user_id).where(
         (UserGame.user_id == author_user_id) &
         (UserGame.game_rawg_id == game_rawg_id)
@@ -144,13 +232,29 @@ async def like_review(
     await db.commit()
     return True
 
+
 async def unlike_review(
     db: AsyncSession,
     liker_user_id: int,
     author_user_id: int,
     game_rawg_id: int,
 ) -> bool:
-    res = await db.execute(
+    """
+    Elimina el 'like' de `liker_user_id` sobre la reseña de `author_user_id` y `game_rawg_id`.
+
+    - Si el like no existía, la operación sigue siendo segura (idempotente).
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        liker_user_id (int): Usuario que quita el like.
+        author_user_id (int): Autor de la reseña.
+        game_rawg_id (int): Juego al que pertenece la reseña.
+
+    Returns:
+        bool: `True` tras confirmar la transacción (aunque no existiese el like previamente).
+    """
+
+    await db.execute(
         delete(ReviewLike).where(
             (ReviewLike.review_user_id == author_user_id) &
             (ReviewLike.review_game_rawg_id == game_rawg_id) &

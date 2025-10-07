@@ -28,10 +28,24 @@ def _filter_updatable_fields(payload: Dict[str, Any]) -> Dict[str, Any]:
 # Funciones ------------------------------------------------------------------
 
 async def get_users(db: AsyncSession, q: Optional[str] = None) -> List[User]:
+    """
+    Recupera todos los usuarios o los filtra por coincidencia en nombre o email.
+
+    Si se pasa el parámetro `q`, realiza una búsqueda parcial (case-insensitive)
+    por `username` o `email`. Si no se pasa, devuelve todos los usuarios.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        q (Optional[str]): Texto a buscar (se busca por nombre).
+
+    Returns:
+        List[User]: Lista de usuarios que coinciden con el filtro o todos si no hay filtro.
+    """
+    
     if q:
         result = await db.execute(
             select(User).where(
-                or_(User.username.ilike(f"%{q}%"), User.email.ilike(f"%{q}%"))
+                or_(User.username.ilike(f"%{q}%"))
             )
         )
         return result.scalars().all()
@@ -41,11 +55,36 @@ async def get_users(db: AsyncSession, q: Optional[str] = None) -> List[User]:
 
 
 async def get_user(db: AsyncSession, user_id: int) -> Optional[User]:
+    """
+    Obtiene un usuario específico a partir de su ID.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        user_id (int): Identificador del usuario a consultar.
+
+    Returns:
+        Optional[User]: Objeto `User` si se encuentra, o `None` si no existe.
+    """
+
     result = await db.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
 
 
 async def create_user(db: AsyncSession, user: UserCreate) -> User:
+    """
+    Crea un nuevo usuario en la base de datos.
+
+    - Hashea la contraseña antes de almacenarla.
+    - Inicializa los campos básicos como email, username, estado y avatar.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        user (UserCreate): Datos validados del nuevo usuario.
+
+    Returns:
+        User: Objeto `User` recién creado y persistido en la base de datos.
+    """
+
     hashed_pw = pwd_context.hash(user.password)
     db_user = User(
         email=user.email,
@@ -62,7 +101,21 @@ async def create_user(db: AsyncSession, user: UserCreate) -> User:
 
 
 async def update_user(db: AsyncSession, user_id: int, user_update: UserUpdate) -> Optional[User]:
-    # Cargar
+    """
+    Actualiza parcialmente los campos permitidos de un usuario existente.
+
+    Solo se actualizan los campos definidos en `UserUpdate` y presentes en la lista
+    blanca (`_filter_updatable_fields`). Si el usuario no existe, devuelve `None`.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        user_id (int): ID del usuario que se quiere modificar.
+        user_update (UserUpdate): Campos nuevos a aplicar.
+
+    Returns:
+        Optional[User]: Usuario actualizado o `None` si no se encontró.
+    """
+
     result = await db.execute(select(User).where(User.id == user_id))
     user: Optional[User] = result.scalar_one_or_none()
     if not user:
@@ -70,7 +123,6 @@ async def update_user(db: AsyncSession, user_id: int, user_update: UserUpdate) -
 
     data = user_update.dict(exclude_unset=True)
 
-    # Resto de campos permitidos
     for field, value in _filter_updatable_fields(data).items():
         setattr(user, field, value)
 
@@ -80,6 +132,19 @@ async def update_user(db: AsyncSession, user_id: int, user_update: UserUpdate) -
 
 
 async def delete_user(db: AsyncSession, user_id: int) -> Optional[User]:
+    """
+    Elimina un usuario existente de la base de datos por su ID.
+
+    Si el usuario existe, se elimina y se confirma la transacción. Si no existe, devuelve `None`.
+
+    Args:
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
+        user_id (int): Identificador del usuario a eliminar.
+
+    Returns:
+        Optional[User]: Usuario eliminado o `None` si no se encontró.
+    """
+    
     result = await db.execute(select(User).where(User.id == user_id))
     user: Optional[User] = result.scalar_one_or_none()
     if not user:

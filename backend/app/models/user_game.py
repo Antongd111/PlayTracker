@@ -8,11 +8,7 @@ class UserGame(Base):
 
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    game_rawg_id = Column(Integer, nullable=False)
-    game_title = Column(String, nullable=True)
-    image_url = Column(String, nullable=True)
-    release_year = Column(Integer, nullable=True)
+    game_id = Column(Integer, ForeignKey("games.id", ondelete="CASCADE"), nullable=False)
 
     status = Column(String)
     score = Column(Integer)
@@ -22,7 +18,8 @@ class UserGame(Base):
     contains_spoilers = Column(Boolean, nullable=False, default=False, server_default="false")
 
     __table_args__ = (
-        UniqueConstraint("user_id", "game_rawg_id", name="uq_user_games_user_game"),
+        UniqueConstraint("user_id", "game_id", name="uq_user_games_user_game"),
     )
 
     user = relationship("User", back_populates="games")
+    game = relationship("Game")

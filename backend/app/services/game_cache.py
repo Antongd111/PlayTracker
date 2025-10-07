@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.game import Game
-from app.core.rawg import get_game_details
+from app.services.rawg import get_game_from_rawg
 
 # ------------------------------------------------------------------------------
 # Caché de juegos obtenidos desde RAWG
@@ -59,7 +59,6 @@ def _to_date(s: Optional[str]) -> Optional[date]:
     if not s:
         return None
     try:
-        # Tolerante a "YYYY-MM-DD..." quedándose con los 10 primeros caracteres
         return date.fromisoformat(s[:10])
     except ValueError:
         return None
@@ -71,7 +70,7 @@ def _map_formatted_detail(p: Dict[str, Any]) -> Dict[str, Any]:
     campos de nuestro modelo `Game`.
 
     Notas:
-    - Esta función **asume** que `get_game_details()` ya ha aplicado
+    - Esta función **asume** que `get_game_from_rawg()` ya ha aplicado
       `format_game_detail`, es decir, que `p` viene en camelCase y con campos
       reducidos (title, imageUrl, releaseDate, etc.).
     - Se asegura de devolver listas cuando corresponda y de castear `rating`
@@ -83,7 +82,7 @@ def _map_formatted_detail(p: Dict[str, Any]) -> Dict[str, Any]:
     Returns:
         Dict[str, Any]: Diccionario con claves de nuestro modelo `Game`.
     """
-    # rating opcional -> float o None
+
     rating: Optional[float] = None
     if p.get("rating") is not None:
         try:
@@ -91,7 +90,6 @@ def _map_formatted_detail(p: Dict[str, Any]) -> Dict[str, Any]:
         except (TypeError, ValueError):
             rating = None
 
-    # Asegura que cualquier campo de lista sea efectivamente una lista
     def _lst(v: Any) -> List[Any]:
         return v if isinstance(v, list) else []
 
@@ -133,7 +131,7 @@ async def upsert_from_formatted(db: AsyncSession, payload: Dict[str, Any]) -> Ga
     Args:
         db (AsyncSession): Sesión asíncrona de SQLAlchemy.
         payload (Dict[str, Any]): Detalle del juego (camelCase) tal y como
-            lo devuelve `get_game_details()` → `format_game_detail`.
+            lo devuelve `get_game_from_rawg()` → `format_game_detail`.
 
     Returns:
         Game: Instancia persistida (insertada o actualizada).
@@ -161,7 +159,7 @@ async def get_or_fetch_game(db: AsyncSession, rawg_id: int) -> Game:
     Flujo:
     1) Busca por `rawg_id` en la tabla `games`.
     2) Si existe y `fetched_at` > ahora - TTL → devuelve el caché.
-    3) Si no existe o está caduco, llama a `get_game_details(rawg_id)`,
+    3) Si no existe o está caduco, llama a `get_game_from_rawg(rawg_id)`,
        mapea e inserta/actualiza con `upsert_from_formatted`, y devuelve.
 
     Args:
@@ -175,5 +173,5 @@ async def get_or_fetch_game(db: AsyncSession, rawg_id: int) -> Game:
     if g and g.fetched_at and (g.fetched_at > _utcnow() - CACHE_TTL):
         return g
 
-    payload = await get_game_details(rawg_id)  # ← ya viene formateado (camelCase)
+    payload = await get_game_from_rawg(rawg_id)
     return await upsert_from_formatted(db, payload)

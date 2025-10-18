@@ -17,10 +17,10 @@ from app.core.config import settings
 from app.core.database import Base  # o donde tengas tu Base
 
 # IMPORTA TODOS LOS MODELOS para que Alembic los vea
-import app.models.user           # noqa: F401
-import app.models.user_game      # noqa: F401
-# import app.models.friendship   # noqa si lo tienes
-# import app.models.review_like  # lo añadirás luego cuando creemos la tabla de likes
+import app.models.user
+import app.models.user_game
+import app.models.game
+import app.models.friendship
 
 config = context.config
 

@@ -24,3 +24,9 @@ pandas
 joblib
 
 alembic
+
+# Testing
+pytest
+pytest-asyncio
+pytest-cov
+httpx

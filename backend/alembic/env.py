@@ -14,9 +14,8 @@ sys.path.append(BASE_DIR)
 
 # --- Tu config / Base / modelos ---
 from app.core.config import settings
-from app.core.database import Base  # o donde tengas tu Base
+from app.core.database import Base
 
-# IMPORTA TODOS LOS MODELOS para que Alembic los vea
 import app.models.user
 import app.models.user_game
 import app.models.game
@@ -54,7 +53,6 @@ def do_run_migrations(connection) -> None:
         context.run_migrations()
 
 async def run_migrations_online() -> None:
-    # Inyecta la URL aquí (desde .env)
     config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
     connectable = async_engine_from_config(

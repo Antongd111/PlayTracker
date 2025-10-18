@@ -37,7 +37,7 @@ def format_game(game: Dict[str, Any]) -> Dict[str, Any]:
         "rating": game.get("rating", 0)
     }
 
-# Función para mapear los datos al formato del frontend (extendido)
+# Función para mapear los datos al formato del frontend
 def format_game_detail(
     game: Dict[str, Any],
     screenshots: Dict[str, Any],
@@ -87,8 +87,8 @@ async def search_games(query: str) -> List[Dict[str, Any]]:
     data = response.json()
     return [format_game(game) for game in data.get("results", [])]
 
-# Obtener detalles de un juego por ID (extendido para tu frontend)
-async def get_game_details(game_id: int) -> Dict[str, Any]:
+# Obtener detalles de un juego por ID
+async def get_game_from_rawg(game_id: int) -> Dict[str, Any]:
     # Juego principal
     response = await _rawg_get(f"/games/{game_id}")
     if response.status_code != 200:
@@ -136,7 +136,7 @@ async def get_genres() -> Dict[str, Any]:
 
 
 # =========================
-# NUEVO: listar juegos por géneros (para el recomendador)
+# Listar juegos por géneros
 # =========================
 
 async def list_games_by_genres(
@@ -163,10 +163,8 @@ async def list_games_by_genres(
 
     response = await _rawg_get("/games", params=params)
     if response.status_code != 200:
-        # devolvemos lista vacía para que el caller pueda hacer fallback
         return []
 
     data = response.json() or {}
     results = data.get("results", []) or []
-    # devolvemos tal cual (sin format) para máxima info al rankear
     return results

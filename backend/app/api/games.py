@@ -1,11 +1,12 @@
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.rawg import search_games, get_game_details, get_popular_games, get_genres
-from app.schemas.game import GameDetailResponse
+from app.services.rawg import search_games, get_game_from_rawg, get_popular_games, get_genres
+from app.schemas.game import GameDetailResponse, SimilarGame
 
 from app.core.dependencies import get_db
-from app.services.game_catalog import upsert_game_catalog
+from app.services.game_cache import get_or_fetch_game
 
 router = APIRouter()
 
@@ -28,5 +29,12 @@ async def genres():
 
 # Obtener detalles de un juego (y guardarlo en el catálogo si no existe)
 @router.get("/games/{game_id}", response_model=GameDetailResponse)
-async def get_game(game_id: int):
-    return await get_game_details(game_id)
+async def get_game(game_id: int, db: AsyncSession = Depends(get_db)):
+    try:
+        g = await get_or_fetch_game(db, game_id)
+        await db.commit()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Cache/DB error: {e}")
+    if not g:
+        raise HTTPException(status_code=404, detail="Game not found")
+    return g

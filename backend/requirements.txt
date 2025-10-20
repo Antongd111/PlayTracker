@@ -28,5 +28,10 @@ alembic
 # Testing
 pytest
 pytest-asyncio
-pytest-cov
 httpx
+anyio
+asgi-lifespan
+pytest-dotenv
+pytest-sugar
+pytest-emoji
+pytest-clarity

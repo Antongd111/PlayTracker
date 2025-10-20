@@ -154,8 +154,6 @@ async def delete_user(db: AsyncSession, user_id: int) -> Optional[User]:
     return user
 
 
-
-
 # async def get_friends_games(
 #     db: AsyncSession,
 #     user_id: int,

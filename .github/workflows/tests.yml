@@ -1,0 +1,46 @@
+name: CI - Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create .env.test (with secrets)
+        env:
+          DB_USER: ${{ secrets.PT_DB_USER }}
+          DB_PASS: ${{ secrets.PT_DB_PASS }}
+        run: |
+          cat > .env.test << EOF
+          APP_ENV=testing
+          POSTGRES_USER=${DB_USER}
+          POSTGRES_PASSWORD=${DB_PASS}
+          POSTGRES_DB=playtracker_test
+          DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASS}@db_test:5432/playtracker_test
+          EOF
+
+      - name: Run tests (docker compose)
+        run: |
+          docker compose \
+            -p playtracker-ci \
+            -f docker-compose.test.yml \
+            --env-file .env.test \
+            up --build --abort-on-container-exit --exit-code-from tests
+
+      - name: Dump docker logs on failure
+        if: failure()
+        run: |
+          docker compose -p playtracker-ci -f docker-compose.test.yml logs --no-color || true
+
+      - name: Teardown
+        if: always()
+        run: |
+          docker compose -p playtracker-ci -f docker-compose.test.yml down -v --remove-orphans

@@ -9,38 +9,44 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    environment: ".env.test"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create .env.test (with secrets)
+      - name: Create backend/.env.test (with environment secrets)
         env:
           DB_USER: ${{ secrets.PT_DB_USER }}
           DB_PASS: ${{ secrets.PT_DB_PASS }}
         run: |
-          cat > .env.test << EOF
+          cat > backend/.env.test << EOF
           APP_ENV=testing
           POSTGRES_USER=${DB_USER}
           POSTGRES_PASSWORD=${DB_PASS}
           POSTGRES_DB=playtracker_test
           DATABASE_URL=postgresql+asyncpg://${DB_USER}:${DB_PASS}@db_test:5432/playtracker_test
+
+          SECRET_KEY=dummy-secret-for-ci
+          ACCESS_TOKEN_EXPIRE_MINUTES=60
+          ALGORITHM=HS256
+          RAWG_API_KEY=dummy-rawg-key
           EOF
 
       - name: Run tests (docker compose)
         run: |
           docker compose \
             -p playtracker-ci \
-            -f docker-compose.test.yml \
-            --env-file .env.test \
+            -f backend/docker-compose.test.yml \
+            --env-file backend/.env.test \
             up --build --abort-on-container-exit --exit-code-from tests
 
       - name: Dump docker logs on failure
         if: failure()
         run: |
-          docker compose -p playtracker-ci -f docker-compose.test.yml logs --no-color || true
+          docker compose -p playtracker-ci -f backend/docker-compose.test.yml logs --no-color || true
 
       - name: Teardown
         if: always()
         run: |
-          docker compose -p playtracker-ci -f docker-compose.test.yml down -v --remove-orphans
+          docker compose -p playtracker-ci -f backend/docker-compose.test.yml down -v --remove-orphans

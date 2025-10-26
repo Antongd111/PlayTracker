@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.models.game import Game
-from app.services.rawg import get_game_from_rawg
+from app.services.game import get_game_from_rawg
 
 # ------------------------------------------------------------------------------
 # Caché de juegos obtenidos desde RAWG

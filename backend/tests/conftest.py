@@ -17,7 +17,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
     async_sessionmaker,
 )
-from sqlalchemy.pool import NullPool  # 👈
+from sqlalchemy.pool import NullPool
 from sqlalchemy.orm import close_all_sessions
 
 from main import app
@@ -27,26 +27,25 @@ from app.core.database import Base
 # --- DB de test ---
 DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite+aiosqlite:///:memory:"
 
-# 👇 evita reusar conexiones entre tests
 engine = create_async_engine(DATABASE_URL, echo=False, future=True, poolclass=NullPool)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
+""" Creación de loop de eventos para tests asíncronos """
 @pytest.fixture(scope="session", autouse=True)
 def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
-# ✅ Re-crear esquema antes de CADA test; no hacemos drop en teardown
+""" Limpieza y preparación de la base de datos antes de cada test """
 @pytest.fixture(scope="function", autouse=True)
 async def prepare_database():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
-    # No drop aquí: evita chocar con sesiones vivas
-    # (si quieres, puedes dejar un simple `pass`)
 
+""" Creación de la sesión de base de datos para los tests """
 @pytest.fixture()
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     async with engine.connect() as conn:
@@ -55,12 +54,12 @@ async def db_session() -> AsyncGenerator[AsyncSession, None]:
         try:
             yield session
         finally:
-            # 👇 rollback ANTES de cerrar
             if session.in_transaction():
                 await session.rollback()
             await session.close()
             await trans.rollback()
 
+""" Cliente HTTP asíncrono para tests """
 @pytest.fixture()
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     async def _override_get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -81,11 +80,12 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     finally:
         app.dependency_overrides.clear()
 
-# (Opcional) Ejecutar solo con asyncio para no duplicar (asyncio/trio)
+""" Configuración de AnyIO para tests asíncronos """
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
 
+""" Personalización de los reportes de pytest """
 def pytest_report_teststatus(report, config):
     if report.when == "call":
         if report.passed:

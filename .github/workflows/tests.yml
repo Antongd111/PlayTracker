@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Create backend/.env.test (with environment secrets)
+      - name: Crear .env de testing con GitHub Secrets
         env:
           DB_USER: ${{ secrets.PT_DB_USER }}
           DB_PASS: ${{ secrets.PT_DB_PASS }}
@@ -33,7 +33,7 @@ jobs:
           RAWG_API_KEY=dummy-rawg-key
           EOF
 
-      - name: Run tests (docker compose)
+      - name: Ejecución de tests
         run: |
           docker compose \
             -p playtracker-ci \
@@ -41,12 +41,12 @@ jobs:
             --env-file backend/.env.test \
             up --build --abort-on-container-exit --exit-code-from tests
 
-      - name: Dump docker logs on failure
+      - name: Mostrar logs si fallan los tests
         if: failure()
         run: |
           docker compose -p playtracker-ci -f backend/docker-compose.test.yml logs --no-color || true
 
-      - name: Teardown
+      - name: Limpiar contenedores de testing
         if: always()
         run: |
           docker compose -p playtracker-ci -f backend/docker-compose.test.yml down -v --remove-orphans

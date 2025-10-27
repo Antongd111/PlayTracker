@@ -100,10 +100,10 @@ async def test_upsert_review_creates_or_updates_usergame(db_session: AsyncSessio
 # get_game_reviews_stats
 # ----------------------------------------------------------------------
 
-async def test_get_game_reviews_stats_computes_average_and_count(db_session: AsyncSession):
+async def test_get_game_reviews_stats(db_session: AsyncSession):
     u1 = await _create_user(db_session, "p1")
     u2 = await _create_user(db_session, "p2")
-    g = await _create_game(db_session, 222, "Zelda")
+    g = await _create_game(db_session, 100, "The Witcher 3")
 
     await _create_usergame(db_session, u1, g, score=8)
     await _create_usergame(db_session, u2, g, score=6)

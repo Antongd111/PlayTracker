@@ -33,7 +33,7 @@ jobs:
           RAWG_API_KEY=dummy-rawg-key
           EOF
 
-      - name: Ejecución de tests
+      - name: Levantar contenedores de testing y ejecutar tests
         run: |
           docker compose \
             -p playtracker-ci \

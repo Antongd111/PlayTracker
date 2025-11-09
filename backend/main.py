@@ -41,7 +41,7 @@ async def shutdown():
 app.include_router(users.router)
 app.include_router(user_games.router)
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
-app.include_router(games.router, prefix="/rawg", tags=["rawg"])
+app.include_router(games.router, prefix="/rawg", tags=["games"])
 app.include_router(friendships.router)
 app.include_router(review.router)
 app.include_router(users_recommendations.router)

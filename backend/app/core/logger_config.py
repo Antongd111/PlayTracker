@@ -24,6 +24,7 @@ def get_logger(name: str | None = None) -> logging.Logger:
 
     logger.setLevel(logging.INFO)
 
+    # Formato de los mensajes de logs
     formatter = logging.Formatter(
         "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
     )
@@ -35,7 +36,7 @@ def get_logger(name: str | None = None) -> logging.Logger:
         backupCount=3,
         encoding="utf-8",
     )
-    
+
     file_handler.setFormatter(formatter)
 
     stream_handler = logging.StreamHandler()

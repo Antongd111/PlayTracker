@@ -18,7 +18,7 @@ async def test_search_games(client):
     query = "Halo"
     
     # Realizar la solicitud a la API
-    response = client.get(f"/games/search?query={query}")
+    response = client.get(f"/rawg/games/search?query={query}")
     
     # Comprobaciones
     assert response.status_code == 200
@@ -32,7 +32,7 @@ async def test_get_popular_games(client):
     page = 1
     
     # Realizar la solicitud a la API
-    response = client.get(f"/games/popular?page={page}")
+    response = client.get(f"/rawg/games/popular?page={page}")
     
     # Comprobaciones
     assert response.status_code == 200
@@ -43,7 +43,7 @@ async def test_get_popular_games(client):
 @pytest.mark.asyncio
 async def test_get_genres(client):
     # Realizar la solicitud a la API
-    response = client.get("/games/genres")
+    response = client.get("/rawg/games/genres")
     
     # Comprobaciones
     assert response.status_code == 200
@@ -57,7 +57,7 @@ async def test_get_game_details(client):
     game_id = 1
     
     # Realizar la solicitud a la API
-    response = client.get(f"/games/{game_id}")
+    response = client.get(f"/rawg/games/{game_id}")
     
     # Comprobaciones
     assert response.status_code == 200
@@ -69,7 +69,7 @@ async def test_get_game_not_found(client):
     game_id = 9999
     
     # Realizar la solicitud a la API
-    response = client.get(f"/games/{game_id}")
+    response = client.get(f"/rawg/games/{game_id}")
     
     # Comprobaciones
     assert response.status_code == 404
@@ -85,7 +85,7 @@ async def test_get_game_details_server_error(client, monkeypatch):
     game_id = 1
     
     # Realizar la solicitud a la API
-    response = client.get(f"/games/{game_id}")
+    response = client.get(f"/rawg/games/{game_id}")
     
     # Comprobaciones
     assert response.status_code == 500

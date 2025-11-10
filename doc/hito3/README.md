@@ -7,12 +7,28 @@ Antes de comenzar este Hito, mi aplicación ya contaba con una API con un númer
 - Refactorización de algunos endpoints para hacer una separación de grupos más correcta.
 - Implementación del logger para registrar la actividad de la API en ficheros de log en el directorio del proyeto.
 
-## Diseño de la API
-Como mi aplicación ya estaba en desarrollo antes de empezar la asignatura, tenía una API funcional para comunicarse con el frontend. Sin embargo, al comienzo de la asignatura no tenía una separación estricta entre funcionalidad (services) e interfaz (API). A lo largo de la asignatura, he estado refactorizando la API, separando los endpoints en grupos, cambiando rutas, eliminando endpoints redundantes... La API en este punto tiene los siguientes grupos de endpoints, con las siguientes rutas base:
+> **Nota importante:** en este hito es donde menos he desarrollado mi aplicación por falta de tiempo, por lo que alfunas de las funcionalidades más interesantes (como las recomendaciones) que suponen mayor lógica de negocio no están implementadas aún.
 
-HACER ESTO
+## Diseño de la API (FastAPI)
+Como mi aplicación ya estaba en desarrollo antes de empezar la asignatura, tenía una API funcional para comunicarse con el frontend. Sin embargo, al comienzo de la asignatura no tenía una separación estricta entre funcionalidad (services) e interfaz (API). A lo largo de la asignatura, he estado refactorizando la API, separando los endpoints en grupos, cambiando rutas, eliminando endpoints redundantes... La API en este punto tiene los siguientes endpoints:
 
+![Swagger1](image.png)
+![Swagger2](image-1.png)
+![Swagger3](image-2.png)
 
+He intentado separar los endpoints de la forma más coherente posible, he hecho los siguientes grupos:
+- **users** para los casos de uso sobre la información de los usuarios correspondiente únicamente a la tabla *user* del modelo.
+- **user_games** para las relaciones de los usuarios con los videojuegos, correspondiente a la tabla *user_game* del modelo.
+- **auth** para las rutas correspondientes a login y registro de usuarios.
+- **games** para las rutas correspondientes a la obtención de información de videojuegos (*Nótese la diferencia con user_games, que no obtiene información de los juegos, solo de las relaciones de los usuarios con los mismos*). Correspondiente a la tabla *game* del modelo.
+- **friendship** para las relaciones y solicitudes entre usuarios, correspondiente a la tabla *friendship*.
+
+Los siguientes grupos NO se corresponden con tablas del modelo de la aplicación, sino que ejecutan funcionalidades adicionales (recommendations) o reúnen información de varias tablas (reviews).
+
+- **reviews** para las reseñas de los usuarios de los juegos.
+- **recommendations** con un único endpoint para obtener recomendaciones personalizadas para un usuario.
+
+> **Nota:** lo más probable es que estos grupos cambien a lo largo del desarrollo, ya que aún tengo que refactorizar algunas funcionalidades y añadir otras.
 
 ## Implementación del logging
 ### Configuración
@@ -95,3 +111,18 @@ Como he dicho anteriormente, el objetivo de momento no es hacer log de los error
 - Informar de que se ha producido un error (EXCEPTION)
 
 De esta forma, queda registrado tanto el acceso al endpoint como su resultado.
+
+### Ejemplo de uso
+
+Para el endpoint anterior, voy a hacer dos peticiones, una con caso de éxito y otra forzando un error, para que veamos los dos resultados posibles registrados en el log.
+
+*Caso de éxito*
+![exito_ejemplo](image-4.png)
+*Caso de error*
+![error_ejemplo](image-3.png)
+
+En caso de error, se muestra el mensaje definido en el logger seguido del error completo.
+
+Todas los demás endpoints hacen logs de la misma forma, informando al entrar la petición y el resultado de la misma.
+
+## Tests de la API

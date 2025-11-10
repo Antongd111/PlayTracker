@@ -1,53 +1,41 @@
+# app/api/auth.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas.auth import UserRegister, UserLogin
 from app.core.database import get_async_session
-from app.models.user import User
-from sqlalchemy import select
-from app.core.security import get_password_hash, verify_password, create_access_token
+from app.schemas.auth import UserRegister, UserLogin
+from app.services import auth as service
+from app.core.logger_config import get_logger
 
-router = APIRouter()
-
-# ENDPOINTS ------------------------------------------------------------------
+router = APIRouter(prefix="/auth", tags=["auth"])
+logger = get_logger(__name__)
 
 # Registrar nuevo usuario
 @router.post("/register", status_code=201)
 async def register(user: UserRegister, db: AsyncSession = Depends(get_async_session)):
-    
-    # Comprobar si el usuario ya existe
-    result = await db.execute(select(User).where(User.email == user.email))
-    if result.scalar():
-        raise HTTPException(status_code=400, detail="El email ya está en uso")
+    logger.info(f"Solicitud POST /auth/register para {user.email}")
+    try:
+        new_user = await service.register_user(db, user)
+        logger.info(f"Usuario registrado correctamente (id={new_user.id})")
+        return {"message": "Usuario registrado con éxito", "id": new_user.id}
+    except HTTPException as e:
+        logger.warning(f"Registro fallido ({user.email}): {e.detail}")
+        raise
+    except Exception as e:
+        logger.exception(f"Error interno durante el registro de {user.email}: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al registrar usuario")
 
-    # Comprobar si el nombre de usuario ya existe
-    result = await db.execute(select(User).where(User.username == user.username))
-    if result.scalar():
-        raise HTTPException(status_code=400, detail="El nombre de usuario ya está en uso")
-
-    # Si todo va bien, creación del usuario
-    new_user = User(
-        email=user.email,
-        username=user.username,
-        hashed_password=get_password_hash(user.password)
-    )
-
-    db.add(new_user)
-    await db.commit()
-    await db.refresh(new_user)
-
-    # Se devuelve el id del usuario como respuesta
-    return {"message": "Usuario registrado con éxito", "id": new_user.id}
 
 # Inicio de sesión
 @router.post("/login")
 async def login(user: UserLogin, db: AsyncSession = Depends(get_async_session)):
-    result = await db.execute(select(User).where(User.email == user.email))
-    db_user = result.scalar_one_or_none()
-
-    # Si no existe el usuario o la contraseña es incorrecta
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
-
-    # Se crea el token y se devuelve
-    token = create_access_token(data={"sub": str(db_user.id)})
-    return {"access_token": token, "token_type": "bearer"}
+    logger.info(f"Solicitud POST /auth/login para {user.email}")
+    try:
+        result = await service.login_user(db, user)
+        logger.info(f"Inicio de sesión completado para {user.email}")
+        return result
+    except HTTPException as e:
+        logger.warning(f"Login fallido ({user.email}): {e.detail}")
+        raise
+    except Exception as e:
+        logger.exception(f"Error interno durante el login de {user.email}: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al iniciar sesión")

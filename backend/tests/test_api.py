@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from app.main import app
+from app import *
 from fastapi import HTTPException
 import app.api.games as game
 

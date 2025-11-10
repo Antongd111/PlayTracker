@@ -1,4 +1,3 @@
-# routers/users_recommendations.py
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List

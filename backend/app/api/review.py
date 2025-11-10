@@ -5,14 +5,13 @@ from app.core.dependencies import get_db, get_current_user
 from app.schemas.review import ReviewUpsertIn, ReviewOut, GameReviewsResponse
 from app.services import review as service
 from app.models.user import User
-from app.core.logging_config import get_logger
+from app.core.logger_config import get_logger
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 logger = get_logger(__name__)
 
-# ----------------------------------------------------------------------
-# ENDPOINTS
-# ----------------------------------------------------------------------
+
+# ENDPOINTS ------------------------------------------------------------------
 
 # Crear o actualizar una review
 @router.put("/{game_id}", response_model=ReviewOut)

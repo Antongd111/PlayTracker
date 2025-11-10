@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Query, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.game import search_games, get_game_from_rawg, get_popular_games, get_genres
+from app.services.game import search_games, get_popular_games, get_genres
 from app.schemas.game import GameDetailResponse
 from app.core.dependencies import get_db
 from app.services.game_cache import get_or_fetch_game

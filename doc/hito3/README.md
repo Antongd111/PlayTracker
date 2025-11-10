@@ -126,3 +126,4 @@ En caso de error, se muestra el mensaje definido en el logger seguido del error 
 Todas los demás endpoints hacen logs de la misma forma, informando al entrar la petición y el resultado de la misma.
 
 ## Tests de la API
+He intentando a última hora implementar tests para los endpoints de la API, para que se testeen de manera independiente a la funcionalidad definida en los services. Para ello, estoy utilizando **testClient** de **FastAPI** con pytest, añadiendo un nuevo archivo de tests a los del hito anterior que se centre en testear la API de manera exhaustiva. Sin embargo, debido a los problemas derivados en la configuración del entorno para testear la API, no he conseguido implementar los tests de manera correcta, obteniendo errores no del mal funcionamiento de los endpoints, sino de la configuración errónea del entorno. Es por ello que no he podido implementar a tiempo el testeo de la API en la integración continua.

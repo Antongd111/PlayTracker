@@ -11,6 +11,8 @@ services:
     ports:
       - "5433:5432"
     tmpfs: /var/lib/postgresql/data # Utilizo un sistema de archivos temporal para los tests
+    volumes:
+      - ./db_init_test:/docker-entrypoint-initdb.d
 
   tests:
     build: .

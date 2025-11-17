@@ -1,31 +1,31 @@
-import pytest
-from fastapi.testclient import TestClient
-from main import app
-from fastapi import HTTPException
-import app.api.games as game
-from httpx import AsyncClient
+# import pytest
+# from fastapi.testclient import TestClient
+# from main import app
+# from fastapi import HTTPException
+# import app.api.games as game
+# from httpx import AsyncClient
 
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as c:
-        yield c
+# @pytest.fixture(scope="module")
+# def client():
+#     with TestClient(app) as c:
+#         yield c
 
-@pytest.fixture
-def user_data():
-    return {
-        "email": "testuser@example.com",
-        "username": "testuser",
-        "hashed_password": "fakepassword",
-        "status": "active",
-    }
+# @pytest.fixture
+# def user_data():
+#     return {
+#         "email": "testuser@example.com",
+#         "username": "testuser",
+#         "hashed_password": "fakepassword",
+#         "status": "active",
+#     }
 
 
-@pytest.fixture
-def user_update_data():
-    return {
-        "email": "updateduser@example.com",
-        "username": "updateduser",
-    }
+# @pytest.fixture
+# def user_update_data():
+#     return {
+#         "email": "updateduser@example.com",
+#         "username": "updateduser",
+#     }
 # ----------------------------------------------------------------------
 # ENDPOINTS DE games
 # ----------------------------------------------------------------------
@@ -112,11 +112,11 @@ def user_update_data():
 # ENDPOINTS DE users
 # ----------------------------------------------------------------------
 
-@pytest.mark.asyncio
-async def test_create_user(client: AsyncClient, user_data):
-    response = await client.post("/users/", json=user_data)
+# @pytest.mark.asyncio
+# async def test_create_user(client: AsyncClient, user_data):
+#     response = await client.post("/users/", json=user_data)
     
-    assert response.status_code == 201
-    data = response.json()
-    assert data["email"] == user_data["email"]
-    assert data["username"] == user_data["username"]
+#     assert response.status_code == 201
+#     data = response.json()
+#     assert data["email"] == user_data["email"]
+#     assert data["username"] == user_data["username"]

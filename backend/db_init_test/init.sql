@@ -1,0 +1,1 @@
+CREATE DATABASE playtracker_test;

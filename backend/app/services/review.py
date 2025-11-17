@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.review_like import ReviewLike
 from app.models.game import Game
 
-from app.services.game_cache import get_or_fetch_game
+from app.services.game import get_game
 
 
 # ----------------------------------------------------------------------
@@ -33,7 +33,7 @@ async def upsert_review(
 
     now = datetime.now(timezone.utc)
 
-    game = await get_or_fetch_game(db, game_id)
+    game = await get_game(db, game_id)
     await db.flush()
 
     q = select(UserGame).where(

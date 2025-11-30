@@ -5,7 +5,7 @@ Para este hito, se pide la construcción de la infraestructura de la aplicación
 ## Estado del proyecto antes del hito
 La infraestructura del proyecto ya estaba diseñada con contenedores desde la base, tanto la ejecución del backend como la base de datos y los tests. Para ello, utilizo dos archivos de docker compose: `docker-compose.yml` y `docker-compose.test.yml`.
 
-Como sugiere el nombre, el segundo es el que levanta una instancia de pruebas de la aplicación y ejecuta los tests en un entorno efímero, creando una base de datos de pruebas que se elimina tras cada ejecución del contenedor. Este proceso ya se explicó en el [hito 3](../hito3/README.md).
+Como sugiere el nombre, el segundo es el que levanta una instancia de pruebas de la aplicación y ejecuta los tests en un entorno efímero, creando una base de datos de pruebas que se elimina tras cada ejecución del contenedor. Este proceso ya se explicó en el [hito 2](../hito2/README.md).
 
 Durante el desarrollo de este hito, comprobaré la dockerización ya montada, y refactorizaré lo necesario para cumplir con los requisitos del hito, además de documentar lo ya construido y el proceso de los cambios realizados.
 
@@ -129,3 +129,49 @@ Sigamos con el `docker-compose.yml`. Las directivas nuevas que no se utilizaron 
 
 Por lo demás, no veo conveniente reiterar en las mismas directivas.
 
+## Estructura del clúster de contenedores de tests
+Esto ya se explicó en el [hito 2](../hito2/README.md), pero volveré a explicar en este las principales diferencias con el entorno de contenedores de desarrollo ya descrito en el anterior epígrafe.
+
+Para la ejecución de los tests, se utiliza este otro compose, `docker-compose.test.yml`:
+```yml
+services:
+  db_test:
+    image: postgres:15
+    container_name: playtracker-db-test
+    env_file: .env.test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: playtracker
+      POSTGRES_PASSWORD: playtracker
+      POSTGRES_DB: playtracker_test
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5433:5432"
+    tmpfs: 
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U playtracker -d playtracker_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  tests:
+    build: .
+    container_name: playtracker-tests
+    env_file: .env.test
+    depends_on:
+      db_test:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "pytest --maxfail=1 --disable-warnings -v"
+```
+
+Las principales diferencias con el docker-compose descrito anteriormente son las siguientes:
+- Uso de memoria RAM para montar la base de datos (`tmpfs`). No necesitamos persistencia en los tests ya que es una ejecución aislada.
+- Cambio de puertos para no generar conflictos con el otro entorno.
+- Uso de **healthcheck** para garantizar que la base de datos esté lista antes de ejecutar los tests.
+- El comando de ejecución ahora es `  sh -c "pytest --maxfail=1 --disable-warnings -v"`, que ejecuta los tests y muere inmediatamente después.
+- Uso de las variables de entorno de `env.test`, en lugar de las de .env. Como no es el archivo de entorno por defecto, hay que especificarlo con `env_file`.

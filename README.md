@@ -28,6 +28,9 @@ A continuación muestro capturas de pantalla de la aplicación a día de hoy, pa
 ## Desarrollo de la asignatura
 La documentación específica al desarrollo de los hitos de la asignatura está descrita en el documento de cada hito:
 1. [Repositorio de pácticas y definición del proyecto](doc/hito1/README.md)
+2. [Integración Continua](doc/hito2/README.md)
+3. [Diseño en microservicios](doc/hito3/README.md)
+4. [Composición de servicios](doc/hito4/README.md)
 
 ## Licencia
 Este proyecto está bajo la licencia MIT.  

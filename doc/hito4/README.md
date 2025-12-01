@@ -231,44 +231,65 @@ jobs:
 
 Voy a descomponerlo paso a paso:
 1. **Trigger**: el proceso se inicia cada vez que se realiza un push a mi rama master:
-```yml
-on:
-  push:
-    branches: [ "master" ]
-  workflow_dispatch:
-```
+    ```yml
+    on:
+      push:
+        branches: [ "master" ]
+      workflow_dispatch:
+    ```
 
 2. **Entorno**: se establecen previamente las variables de entorno. Como registro se pone *ghcr* para enviar el paquete a GitHub, y como nombre de la imagen utilizo el nombre del repositorio. Para asignarlo dinámicamente, se utiliza la **variable de contexto** de GitHub, con `${{github.}}`:
-```yml
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-```
+    ```yml
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository }}
+    ```
 
 3. **Ejecución**:
-- Se especifican el entorno y los permisos:
-```yml
-  build-and-push:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
+    - Se especifican el entorno y los permisos:
+      ```yml
+        build-and-push:
+          runs-on: ubuntu-latest
+          permissions:
+            contents: read
+            packages: write
+      ```
+
+    - Se clona el repositorio en el entorno:
+      ```yml
+            - name: Descargar el código (Checkout)
+              uses: actions/checkout@v4
+      ```
+
+    - Autenticación en docker con las credenciales de GitHub, y un [token generado automáticamente para el login](https://docs.github.com/en/actions/concepts/security/github_token). Según he visto en los tutoriales, este token hay que crearlo manualmente, pero a mi me ha funcionado este método que genera el token efímero.
+      ```yml
+            - name: Loguearse en GitHub Container Registry
+              uses: docker/login-action@v3
+              with:
+                registry: ${{ env.REGISTRY }}
+                username: ${{ github.actor }}
+                password: ${{ secrets.GITHUB_TOKEN }}
+      ```
+
+4. **Publicación:** en este paso se indica el directorio de trabajo (sobre el que se ejecutarán los comandos del Dockerfile), la ruta del Dockerfile y se indica se suba automáticamente la imagen a Github con `push: true`.
+
+    ```yml
+          - name: Build and push Docker image
+            uses: docker/build-push-action@v5
+            with:
+              context: ./backend
+              file: ./backend/Dockerfile
+              push: true
+              tags: ghcr.io/antongd111/playtracker:latest
+    ```
+
+## Resultados de la publicación
+Adjunto imágenes con la correcta ejecución de los tests y de la publicación del contenedor. La imagen del backend puede descargarse con el siguiente comando:
+
+```bash
+docker pull ghcr.io/antongd111/playtracker:latest
 ```
 
-- Se clona el repositorio en el entorno:
-```yml
-      - name: Descargar el código (Checkout)
-        uses: actions/checkout@v4
-```
+![alt text](image.png)
 
-- Autenticación en docker con las credenciales de GitHub, y un [token generado automáticamente para el login](https://docs.github.com/en/actions/concepts/security/github_token). Según he visto en los tutoriales, este token hay que crearlo manualmente, pero a mi me ha funcionado este método que genera el token efímero.
-```yml
-      - name: Loguearse en GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-```
-
-- 
+![alt text](image-1.png)

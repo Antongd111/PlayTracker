@@ -175,3 +175,5 @@ Las principales diferencias con el docker-compose descrito anteriormente son las
 - Uso de **healthcheck** para garantizar que la base de datos esté lista antes de ejecutar los tests.
 - El comando de ejecución ahora es `  sh -c "pytest --maxfail=1 --disable-warnings -v"`, que ejecuta los tests y muere inmediatamente después.
 - Uso de las variables de entorno de `env.test`, en lugar de las de .env. Como no es el archivo de entorno por defecto, hay que especificarlo con `env_file`.
+
+## Publicación en Github Packages

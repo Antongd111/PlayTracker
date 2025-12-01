@@ -177,3 +177,98 @@ Las principales diferencias con el docker-compose descrito anteriormente son las
 - Uso de las variables de entorno de `env.test`, en lugar de las de .env. Como no es el archivo de entorno por defecto, hay que especificarlo con `env_file`.
 
 ## Publicación en Github Packages
+Se ha implementado un sistema de Integración Continua para generar y publicar automáticamente la imagen del contenedor del backend.
+
+El flujo de trabajo para dicho proceso está definido en el archivo `docker-publish.yml`. El contenido es el siguiente:
+```yml
+name: Publicación de Docker a GitHub Container Registry
+
+# Ejecutarlo cuando se hace push a master
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Descargar el código (Checkout)
+        uses: actions/checkout@v4
+
+      - name: Loguearse en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+```
+
+Voy a descomponerlo paso a paso:
+1. **Trigger**: el proceso se inicia cada vez que se realiza un push a mi rama master:
+```yml
+on:
+  push:
+    branches: [ "master" ]
+  workflow_dispatch:
+```
+
+2. **Entorno**: se establecen previamente las variables de entorno. Como registro se pone *ghcr* para enviar el paquete a GitHub, y como nombre de la imagen utilizo el nombre del repositorio. Para asignarlo dinámicamente, se utiliza la **variable de contexto** de GitHub, con `${{github.}}`:
+```yml
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+```
+
+3. **Ejecución**:
+- Se especifican el entorno y los permisos:
+```yml
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+```
+
+- Se clona el repositorio en el entorno:
+```yml
+      - name: Descargar el código (Checkout)
+        uses: actions/checkout@v4
+```
+
+- Autenticación en docker con las credenciales de GitHub, y un [token generado automáticamente para el login](https://docs.github.com/en/actions/concepts/security/github_token). Según he visto en los tutoriales, este token hay que crearlo manualmente, pero a mi me ha funcionado este método que genera el token efímero.
+```yml
+      - name: Loguearse en GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+```
+
+- 

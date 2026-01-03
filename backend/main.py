@@ -47,6 +47,11 @@ app.include_router(review.router)
 app.include_router(users_recommendations.router)
 app.include_router(user_friends.users_friends_router)
 
+@app.get("/health", status_code=200, tags=["health"])
+async def health():
+    logger.info("Health check requested")
+    return {"status": "ok"}
+
 @app.get("/")
 def root():
     logger.info("Ruta raíz accedida")

@@ -103,29 +103,23 @@ async def send_request(db: AsyncSession, me: int, to: int) -> Optional[Friendshi
     return None
 
 
-async def accept_request(db: AsyncSession, me: int, from_user: int) -> Optional[Friendship]:
+async def accept_request(
+    db: AsyncSession, 
+    me: int, 
+    from_user_id: Optional[int] = None, 
+    friendship_id: Optional[int] = None
+) -> Optional[Friendship]:
     """
-    Acepta una solicitud de amistad pendiente enviada por `from_user` hacia `me`.
-
-    Reglas:
-    - Debe existir la relación y estar en `pending`.
-    - `me` NO puede ser el requester (debe ser el destinatario).
-    - Cambia el estado a `accepted` y fija `responded_at`.
-
-    Args:
-        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        me (int): Usuario que acepta (destinatario de la solicitud).
-        from_user (int): Usuario que envió la solicitud.
-
-    Returns:
-        Optional[Friendship]: Entidad actualizada o None si no procede.
+    Acepta una solicitud. Puede buscarse por friendship_id o por el par de usuarios.
     """
-    fr = await get_friendship(db, me, from_user)
-    if fr is None:
+    if friendship_id:
+        fr = await db.get(Friendship, friendship_id)
+    elif from_user_id:
+        fr = await get_friendship(db, me, from_user_id)
+    else:
         return None
-    if fr.status != FriendshipStatus.pending:
-        return None
-    if fr.requester_id == me:
+
+    if fr is None or fr.status != FriendshipStatus.pending or fr.requester_id == me:
         return None
 
     fr.status = FriendshipStatus.accepted
@@ -136,29 +130,23 @@ async def accept_request(db: AsyncSession, me: int, from_user: int) -> Optional[
     return fr
 
 
-async def decline_request(db: AsyncSession, me: int, from_user: int) -> Optional[Friendship]:
+async def decline_request(
+    db: AsyncSession, 
+    me: int, 
+    from_user_id: Optional[int] = None, 
+    friendship_id: Optional[int] = None
+) -> Optional[Friendship]:
     """
-    Rechaza una solicitud de amistad pendiente enviada por `from_user` hacia `me`.
-
-    Reglas:
-    - Debe existir la relación y estar en `pending`.
-    - `me` NO puede ser el requester.
-    - Cambia el estado a `declined` y fija `responded_at`.
-
-    Args:
-        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        me (int): Usuario que rechaza (destinatario).
-        from_user (int): Usuario que envió la solicitud.
-
-    Returns:
-        Optional[Friendship]: Entidad actualizada o None si no procede.
+    Rechaza una solicitud pendiente.
     """
-    fr = await get_friendship(db, me, from_user)
-    if fr is None:
+    if friendship_id:
+        fr = await db.get(Friendship, friendship_id)
+    elif from_user_id:
+        fr = await get_friendship(db, me, from_user_id)
+    else:
         return None
-    if fr.status != FriendshipStatus.pending:
-        return None
-    if fr.requester_id == me:
+
+    if fr is None or fr.status != FriendshipStatus.pending or fr.requester_id == me:
         return None
 
     fr.status = FriendshipStatus.declined
@@ -169,25 +157,30 @@ async def decline_request(db: AsyncSession, me: int, from_user: int) -> Optional
     return fr
 
 
-async def unfriend(db: AsyncSession, me: int, other: int) -> Optional[Friendship]:
+async def unfriend(
+    db: AsyncSession, 
+    me: int, 
+    other_user_id: Optional[int] = None, 
+    friendship_id: Optional[int] = None
+) -> Optional[Friendship]:
     """
-    Elimina una amistad existente entre `me` y `other`.
-
-    - Solo procede si el estado actual es `accepted`.
-    - Borra la fila (no deja historial).
-
-    Args:
-        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        me (int): Usuario que inicia el borrado.
-        other (int): Otro extremo de la amistad.
-
-    Returns:
-        Optional[Friendship]: Entidad eliminada o None si no procede.
+    Elimina una amistad (accepted) o cancela una solicitud propia (pending).
     """
-    fr = await get_friendship(db, me, other)
+    if friendship_id:
+        fr = await db.get(Friendship, friendship_id)
+    elif other_user_id:
+        fr = await get_friendship(db, me, other_user_id)
+    else:
+        return None
+
     if fr is None:
         return None
-    if fr.status != FriendshipStatus.accepted:
+        
+    # Solo podemos borrar si está aceptada, o si es una solicitud pendiente enviada por mí
+    is_accepted = fr.status == FriendshipStatus.accepted
+    is_my_pending = fr.status == FriendshipStatus.pending and fr.requester_id == me
+    
+    if not (is_accepted or is_my_pending):
         return None
 
     await db.delete(fr)
@@ -195,42 +188,40 @@ async def unfriend(db: AsyncSession, me: int, other: int) -> Optional[Friendship
     return fr
 
 
-async def block_user(db: AsyncSession, me: int, other: int) -> Friendship:
+async def block_user(
+    db: AsyncSession, 
+    me: int, 
+    other_user_id: Optional[int] = None, 
+    friendship_id: Optional[int] = None
+) -> Optional[Friendship]:
     """
-    Bloquea al usuario `other` para `me`.
-
-    - Si no había relación previa, crea una con estado `blocked`.
-    - Si existía, actualiza a `blocked` y marca `blocker_id = me`.
-
-    Args:
-        db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        me (int): Usuario que bloquea.
-        other (int): Usuario bloqueado.
-
-    Returns:
-        Friendship: Entidad en estado `blocked`.
+    Bloquea a un usuario.
     """
-    fr = await get_friendship(db, me, other)
-    if fr is None:
-        a, b = _pair(me, other)
-        fr = Friendship(
-            user_id_a=a,
-            user_id_b=b,
-            requester_id=me,  # arbitrario pero consistente
-            status=FriendshipStatus.blocked,
-            blocker_id=me,
-            responded_at=datetime.utcnow(),
-        )
-        db.add(fr)
+    if friendship_id:
+        fr = await db.get(Friendship, friendship_id)
+    elif other_user_id:
+        fr = await get_friendship(db, me, other_user_id)
+        if fr is None:
+            # Si no hay relación, creamos una nueva directamente bloqueada
+            a, b = _pair(me, other_user_id)
+            fr = Friendship(
+                user_id_a=a, user_id_b=b,
+                requester_id=me, status=FriendshipStatus.blocked,
+                blocker_id=me, responded_at=datetime.utcnow()
+            )
+            db.add(fr)
+            await db.commit()
+            await db.refresh(fr)
+            return fr
+    else:
+        return None
+
+    if fr:
+        fr.status = FriendshipStatus.blocked
+        fr.blocker_id = me
+        fr.responded_at = datetime.utcnow()
         await db.commit()
         await db.refresh(fr)
-        return fr
-
-    fr.status = FriendshipStatus.blocked
-    fr.blocker_id = me
-    fr.responded_at = datetime.utcnow()
-    await db.commit()
-    await db.refresh(fr)
     return fr
 
 

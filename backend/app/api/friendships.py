@@ -7,6 +7,9 @@ from app.models.user import User
 from app.services import friendship as service
 from app.core.logger_config import get_logger
 
+from sqlalchemy import select, or_, and_
+from app.models.friendship import Friendship
+
 router = APIRouter(prefix="/friendships", tags=["friendships"])
 logger = get_logger(__name__)
 
@@ -45,24 +48,67 @@ async def list_friendships(
 ):
     logger.info(f"Solicitud GET /friendships (user_id={user_id}, status={status_filter}) por usuario {current_user.id}")
     try:
+        # CASO 1: SOLICITUDES PENDIENTES (Entrantes y Salientes)
         if status_filter == "pending":
             if user_id is None:
                 logger.warning(f"Falta user_id para filtrar pending (usuario {current_user.id})")
                 raise HTTPException(status_code=400, detail="user_id requerido para pending")
-            incoming = await service.list_incoming_requests(db, user_id)
-            outgoing = await service.list_outgoing_requests(db, user_id)
-            logger.info(f"Usuario {user_id} tiene {len(incoming)} solicitudes entrantes y {len(outgoing)} salientes")
-            return {"incoming": incoming, "outgoing": outgoing}
+            
+            # Obtenemos las filas planas del servicio
+            incoming_rows = await service.list_incoming_requests(db, user_id)
+            outgoing_rows = await service.list_outgoing_requests(db, user_id)
 
+            # Formateador para anidar el 'other_user' como espera el frontend (IncomingReqDto)
+            def format_request(row):
+                return {
+                    "friendship_id": row["friendship_id"],
+                    "requester_id": row["requester_id"],
+                    "status": row["status"],
+                    "requested_at": row["requested_at"].isoformat() if row["requested_at"] else None,
+                    "other_user": {
+                        "id": row["other_id"],
+                        "username": row["username"],
+                        "avatar_url": row["avatar_url"]
+                    }
+                }
+
+            logger.info(f"Usuario {user_id} tiene {len(incoming_rows)} solicitudes entrantes y {len(outgoing_rows)} salientes")
+            return {
+                "incoming": [format_request(r) for r in incoming_rows],
+                "outgoing": [format_request(r) for r in outgoing_rows]
+            }
+
+        # CASO 2: AMIGOS ACEPTADOS
         elif status_filter == "accepted":
             uid = user_id or current_user.id
-            rows = await service.list_friends(db, uid)
+            
+            # Consultamos el Usuario y el ID de la relación para que el frontend pueda borrar amigos
+            q = (
+                select(User, Friendship.id.label("f_id"))
+                .join(Friendship, or_(
+                    and_(Friendship.user_id_a == uid, User.id == Friendship.user_id_b),
+                    and_(Friendship.user_id_b == uid, User.id == Friendship.user_id_a)
+                ))
+                .where(Friendship.status == "accepted")
+            )
+            res = await db.execute(q)
+            rows = res.all()
+            
             logger.info(f"Usuario {uid} tiene {len(rows)} amigos aceptados")
-            return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in rows]
+            return [
+                {
+                    "id": u.id, 
+                    "username": u.username, 
+                    "avatar_url": u.avatar_url,
+                    "friendship_id": f_id # Crucial para FriendDto en el frontend
+                } for u, f_id in rows
+            ]
 
+        # CASO 3: CONSULTA GENÉRICA
         else:
             logger.info(f"Consulta genérica de friendships (sin filtro) para user_id={user_id}")
             return {"ok": True}
+
     except HTTPException:
         raise
     except Exception as e:

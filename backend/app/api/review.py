@@ -67,7 +67,7 @@ async def list_reviews_for_game(
 
         logger.info(f"Devueltas {len(rows)} reseñas (game={game_id}, avg={avg}, count={cnt})")
         return GameReviewsResponse(
-            game_id=game_id,
+            game_rawg_id=game_id,
             avg_score_global=avg,
             count_reviews=cnt,
             reviews=[

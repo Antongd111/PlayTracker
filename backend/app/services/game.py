@@ -9,6 +9,10 @@ from sqlalchemy import select
 from app.core.config import settings
 from app.models.game import Game
 
+from app.core.logger_config import get_logger
+
+logger = get_logger(__name__)
+
 
 # ============================================================================
 # CONFIG
@@ -42,6 +46,25 @@ def _to_date(s: Optional[str]) -> Optional[date]:
       return date.fromisoformat(s[:10])
    except ValueError:
       return None
+   
+def _preview(text: str, n: int = 200) -> str:
+   return (text or "")[:n]
+
+async def _rawg_json_or_502(path: str) -> Dict[str, Any]:
+   resp = await _rawg_get(path)
+
+   if resp.status_code != 200:
+      raise HTTPException(
+         status_code=502,
+         detail=f"RAWG {resp.status_code} en {path}: {_preview(resp.text)}"
+      )
+   try:
+      return resp.json()
+   except ValueError:
+      raise HTTPException(
+         status_code=502,
+         detail=f"RAWG no-JSON en {path}: {_preview(resp.text)}"
+      )
 
 
 # ============================================================================
@@ -99,11 +122,11 @@ async def fetch_game_detail_from_rawg(game_id: int) -> Dict[str, Any]:
 
    game = resp_game.json()
 
-   screenshots = (await _rawg_get(f"/games/{game_id}/screenshots")).json()
-   trailers = (await _rawg_get(f"/games/{game_id}/movies")).json()
-   similar_games = (await _rawg_get(f"/games/{game_id}/suggested")).json()
+   screenshots = await _rawg_json_or_502(f"/games/{game_id}/screenshots")
+   trailers = await _rawg_json_or_502(f"/games/{game_id}/movies")
+   # similar_games = await _rawg_json_or_502(f"/games/{game_id}/suggested")
 
-   return format_game_detail(game, screenshots, trailers, similar_games)
+   return format_game_detail(game, screenshots, trailers, {"results": []})
 
 
 async def search_games(query: str) -> List[Dict[str, Any]]:

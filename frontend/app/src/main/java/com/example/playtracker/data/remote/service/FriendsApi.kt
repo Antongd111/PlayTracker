@@ -1,65 +1,49 @@
 package com.example.playtracker.data.remote.service
 
 import com.example.playtracker.data.remote.dto.friends.FriendDto
-import com.example.playtracker.data.remote.dto.friends.IncomingReqDto
-import com.example.playtracker.data.remote.dto.friends.OutgoingReqDto
+import com.example.playtracker.data.remote.dto.friends.PendingResponseDto
 import com.example.playtracker.data.remote.dto.friends.SimpleOkDto
 import retrofit2.Response
-import retrofit2.http.*
-
+import retrofit2.http.DELETE
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface FriendsApi {
 
-    @POST("friends/requests/{toUserId}")
+    @POST("friendships")
     suspend fun sendFriendRequest(
-        @Path("toUserId") toUserId: Int,
+        @Query("to_user_id") toUserId: Int,
         @Header("Authorization") bearer: String
     ): Response<SimpleOkDto>
 
-    @DELETE("friends/requests/{toUserId}")
-    suspend fun cancelFriendRequest(
-        @Path("toUserId") toUserId: Int,
+    @GET("friendships")
+    suspend fun listFriends(
+        @Query("status_filter") status: String = "accepted",
+        @Query("user_id") userId: Int? = null,
+        @Header("Authorization") bearer: String
+    ): Response<List<FriendDto>>
+
+    @GET("friendships")
+    suspend fun listPending(
+        @Query("status_filter") status: String = "pending",
+        @Query("user_id") userId: Int,
+        @Header("Authorization") bearer: String
+    ): Response<PendingResponseDto>
+
+    @PATCH("friendships/{friendshipId}")
+    suspend fun updateFriendshipStatus(
+        @Path("friendshipId") friendshipId: Int,
+        @Query("action") action: String,
         @Header("Authorization") bearer: String
     ): Response<SimpleOkDto>
 
-    @POST("friends/{fromUserId}/accept")
-    suspend fun acceptFriendRequest(
-        @Path("fromUserId") fromUserId: Int,
+    @DELETE("friendships/{friendshipId}")
+    suspend fun deleteFriendship(
+        @Path("friendshipId") friendshipId: Int,
         @Header("Authorization") bearer: String
-    ): Response<SimpleOkDto>
-
-    @POST("friends/{fromUserId}/decline")
-    suspend fun declineFriendRequest(
-        @Path("fromUserId") fromUserId: Int,
-        @Header("Authorization") bearer: String
-    ): Response<SimpleOkDto>
-
-    @DELETE("friends/{otherUserId}")
-    suspend fun unfriend(
-        @Path("otherUserId") otherUserId: Int,
-        @Header("Authorization") bearer: String
-    ): Response<SimpleOkDto>
-
-    @POST("friends/{otherUserId}/block")
-    suspend fun blockUser(
-        @Path("otherUserId") otherUserId: Int,
-        @Header("Authorization") bearer: String
-    ): Response<SimpleOkDto>
-
-    @GET("friends/requests/incoming")
-    suspend fun listIncoming(
-        @Header("Authorization") bearer: String
-    ): retrofit2.Response<List<IncomingReqDto>>
-
-    @GET("friends")
-    suspend fun listFriends(@Header("Authorization") bearer: String): Response<List<FriendDto>>
-
-    @GET("friends/requests/outgoing")
-    suspend fun listOutgoing(@Header("Authorization") bearer: String): Response<List<OutgoingReqDto>>
-
-    @GET("friends/of/{userId}")
-    suspend fun listFriendsOf(
-        @Path("userId") userId: Int,
-        @Header("Authorization") bearer: String
-    ): retrofit2.Response<List<FriendDto>>
+    ): Response<Unit>
 }

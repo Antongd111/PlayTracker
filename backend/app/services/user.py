@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Optional, List, Dict, Any
+from unittest import result
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
@@ -27,47 +28,70 @@ def _filter_updatable_fields(payload: Dict[str, Any]) -> Dict[str, Any]:
 
 # Funciones ------------------------------------------------------------------
 
+async def get_user(db: AsyncSession, user_id: int) -> Optional[User]: 
+    """ Obtiene un usuario específico a partir de su ID. 
+    Args: 
+        db (AsyncSession): Sesión asíncrona de SQLAlchemy. 
+        user_id (int): Identificador del usuario a consultar. 
+    Returns: 
+        Optional[User]: Objeto User si se encuentra, o None si no existe. 
+    """ 
+        
+    result = await db.execute(select(User).where(User.id == user_id)) 
+    return result.scalar_one_or_none()
+
+
 async def get_users(db: AsyncSession, q: Optional[str] = None) -> List[User]:
     """
     Recupera todos los usuarios o los filtra por coincidencia en nombre o email.
-
     Si se pasa el parámetro `q`, realiza una búsqueda parcial (case-insensitive)
     por `username` o `email`. Si no se pasa, devuelve todos los usuarios.
-
     Args:
         db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        q (Optional[str]): Texto a buscar (se busca por nombre).
-
+        q (Optional[str]): Texto a buscar (se busca por nombre o email).
     Returns:
         List[User]: Lista de usuarios que coinciden con el filtro o todos si no hay filtro.
     """
     
     if q:
-        result = await db.execute(
-            select(User).where(
-                or_(User.username.ilike(f"%{q}%"))
+      q = q.strip()
+      result = await db.execute(
+         select(User).where(
+            or_(
+               User.username.ilike(f"%{q}%"),
+               User.email.ilike(f"%{q}%"),
             )
-        )
-        return result.scalars().all()
+         )
+      )
+      return result.scalars().all()
 
     result = await db.execute(select(User))
     return result.scalars().all()
 
 
-async def get_user(db: AsyncSession, user_id: int) -> Optional[User]:
+async def search_users(db: AsyncSession, query: str) -> List[User]:
     """
-    Obtiene un usuario específico a partir de su ID.
-
+    Busca usuarios cuyo nombre de usuario o email contengan la cadena `query`
+    de forma parcial y case-insensitive.
     Args:
         db (AsyncSession): Sesión asíncrona de SQLAlchemy.
-        user_id (int): Identificador del usuario a consultar.
-
+        query (str): Texto a buscar en nombre de usuario o email.
     Returns:
-        Optional[User]: Objeto `User` si se encuentra, o `None` si no existe.
+        List[User]: Lista de usuarios que coinciden con el criterio de búsqueda.
     """
+    q = (query or "").strip()
+    if not q:
+        return []
 
-    result = await db.execute(select(User).where(User.id == user_id))
-    return result.scalar_one_or_none()
+    stmt = select(User).where(
+        or_(
+            User.username.ilike(f"%{q}%"),
+            User.email.ilike(f"%{q}%"),
+        )
+    )
+
+    result = await db.execute(stmt)
+    return result.scalars().all()
 
 
 async def create_user(db: AsyncSession, user: UserCreate) -> User:

@@ -10,6 +10,7 @@ class UserLite(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class FriendshipRequestOut(BaseModel):
+    friendship_id: int
     requester_id: int
     other_user: UserLite
     status: str

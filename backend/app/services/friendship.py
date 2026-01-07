@@ -310,6 +310,7 @@ async def list_incoming_requests(db: AsyncSession, me: int):
     """
     q = (
         select(
+            Friendship.id.label("friendship_id"),
             Friendship.requester_id,
             User.id.label("other_id"),
             User.username,
@@ -347,6 +348,7 @@ async def list_outgoing_requests(db: AsyncSession, me: int):
     """
     q = (
         select(
+            Friendship.id.label("friendship_id"),
             Friendship.requester_id,
             User.id.label("other_id"),
             User.username,

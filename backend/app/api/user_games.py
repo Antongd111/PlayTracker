@@ -30,10 +30,11 @@ async def get_game(user_id: int, game_id: int, db: AsyncSession = Depends(get_db
             raise HTTPException(status_code=404, detail="Juego no encontrado")
         logger.info(f"Juego encontrado correctamente (user_id={user_id}, game_id={game_id})")
         return game
+    except HTTPException:
+        raise
     except Exception as e:
         logger.exception(f"Error al obtener juego (user_id={user_id}, game_id={game_id}): {e}")
         raise HTTPException(status_code=500, detail="Error interno al obtener juego")
-
 
 # Listar UserGames de un usuario
 @router.get("/", response_model=List[UserGameOut])
@@ -51,20 +52,23 @@ async def list_games(user_id: int, db: AsyncSession = Depends(get_db)):
 # Añadir un UserGame
 @router.post("/", response_model=UserGameOut, status_code=201)
 async def add_game(user_id: int, data: UserGameCreate, db: AsyncSession = Depends(get_db)):
-    logger.info(f"Solicitud POST /users/{user_id}/games con data={data.dict()}")
-    try:
-        new_game = await service.create_user_game(db, user_id, data)
-        logger.info(f"Juego añadido correctamente (user_id={user_id}, game_id={new_game.game_id})")
-        return new_game
-    except Exception as e:
-        logger.exception(f"Error al añadir juego (user_id={user_id}): {e}")
-        raise HTTPException(status_code=500, detail="Error interno al añadir juego")
+   logger.info(f"Solicitud POST /users/{user_id}/games con data={data.model_dump()}")
+   try:
+      new_game = await service.create_user_game(db, user_id, data)
+
+      logger.info(
+         f"Juego añadido correctamente (user_id={user_id}, rawg_id={new_game.get('gameRawgId')}, id={new_game.get('id')})"
+      )
+      return new_game
+   except Exception as e:
+      logger.exception(f"Error al añadir juego (user_id={user_id}): {e}")
+      raise HTTPException(status_code=500, detail="Error interno al añadir juego")
 
 
 # Modificar un UserGame
 @router.put("/{game_id}", response_model=UserGameOut)
 async def update_game(user_id: int, game_id: int, data: UserGameUpdate, db: AsyncSession = Depends(get_db)):
-    logger.info(f"Solicitud PUT /users/{user_id}/games/{game_id} con data={data.dict()}")
+    logger.info(f"Solicitud PUT /users/{user_id}/games/{game_id} con data={data.model_dump()}")
     try:
         updated = await service.update_user_game(db, user_id, game_id, data)
         if not updated:

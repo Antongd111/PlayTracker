@@ -8,7 +8,7 @@ class ReviewUpsertIn(BaseModel):
 
 class ReviewOut(BaseModel):
     user_id: int
-    game_rawg_id: int
+    game_id: int
     score: Optional[int]
     notes: Optional[str]
     contains_spoilers: bool

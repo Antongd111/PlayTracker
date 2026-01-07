@@ -1,6 +1,5 @@
 package com.example.playtracker.data.repository.impl
 
-import android.util.Log
 import com.example.playtracker.data.remote.dto.user.FavouriteRequestDto
 import com.example.playtracker.data.remote.dto.user.UpdateUserDto
 import com.example.playtracker.data.remote.mapper.*
@@ -25,7 +24,8 @@ class UserRepositoryImpl(
         users.searchUsers(query).map { it.toDomain() }
 
     override suspend fun getFriendsOf(userId: Int, bearer: String): List<Friend> =
-        friends.listFriendsOf(userId, bearer).body().orEmpty().map { it.toDomain() }
+        users.listFriendsOf(userId, bearer)
+            .map { it.toDomain() }
 
     override suspend fun updateUserProfile(name: String, status: String?, bearer: String): User {
         val me = users.getCurrentUser(bearer)

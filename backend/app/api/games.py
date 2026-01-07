@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.game import search_games, get_popular_games, get_genres
 from app.schemas.game import GameDetailResponse
 from app.core.dependencies import get_db
-from app.services.game import get_game
+from app.services.game import get_game as get_game_service
 from app.core.logger_config import get_logger
 
 # Crear router y logger del módulo
@@ -54,7 +54,7 @@ async def genres():
 async def get_game(game_id: int, db: AsyncSession = Depends(get_db)):
     logger.info(f"Solicitud de detalles del juego con ID {game_id}")
     try:
-        g = await get_game(db, game_id)
+        g = await get_game_service(db, game_id)
         await db.commit()
         if not g:
             logger.warning(f"Juego con ID {game_id} no encontrado.")

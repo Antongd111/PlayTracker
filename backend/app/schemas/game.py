@@ -1,4 +1,5 @@
-from pydantic import BaseModel, ConfigDict
+from datetime import date
+from pydantic import BaseModel, ConfigDict, Field
 from typing import List, Optional
 
 class SimilarGame(BaseModel):
@@ -7,13 +8,13 @@ class SimilarGame(BaseModel):
     imageUrl: str
 
 class GameDetailResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
     id: int
     title: str
     description: str
-    releaseDate: Optional[str] = None
-    imageUrl: Optional[str] = None
+    releaseDate: Optional[date] = Field(default=None, validation_alias="release_date")
+    imageUrl: Optional[str] = Field(default=None, validation_alias="image_url")
     rating: float = 0.0
     platforms: List[str] = []
     genres: List[str] = []

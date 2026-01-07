@@ -12,6 +12,9 @@ from app.core.logger_config import get_logger
 router = APIRouter(prefix="/users", tags=["users"])
 logger = get_logger(__name__)
 
+logger.error(f"IMPORT service.user FROM: {getattr(service, '__file__', 'NO_FILE')}")
+logger.error(f"service has get_user? {'get_user' in dir(service)}")
+
 # Helpers --------------------------------------------------------------------
 
 async def get_db():
@@ -32,7 +35,7 @@ async def get_user_or_404(user_id: int, db: AsyncSession) -> User:
 # ENDPOINTS ------------------------------------------------------------------
 
 # Listado de usuarios
-@router.get("/", response_model=List[UserOut])
+@router.get("", response_model=List[UserOut])
 async def read_users(db: AsyncSession = Depends(get_db), q: Optional[str] = None):
     logger.info(f"Solicitud GET /users (q={q})")
     try:

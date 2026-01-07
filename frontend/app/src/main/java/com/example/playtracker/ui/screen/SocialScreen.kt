@@ -1,6 +1,5 @@
 package com.example.playtracker.ui.screen
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -19,23 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import coil.compose.rememberAsyncImagePainter
 import com.example.playtracker.R
 import com.example.playtracker.data.local.datastore.UserPreferences
 import com.example.playtracker.data.remote.service.RetrofitInstance
-import com.example.playtracker.data.repository.FriendsRepository
-import com.example.playtracker.data.repository.UserRepository
-import com.example.playtracker.data.repository.impl.FriendsRepositoryImpl
-import com.example.playtracker.data.repository.impl.UserRepositoryImpl
 import com.example.playtracker.domain.model.FriendRequest
 import com.example.playtracker.domain.model.User
 import com.example.playtracker.ui.components.SearchBar
@@ -58,13 +49,41 @@ fun SocialScreen(
 
     var search by remember { mutableStateOf("") }
     var showIncomingDialog by remember { mutableStateOf(false) }
+    var myUserId by remember { mutableStateOf<Int?>(null) }
 
     fun snack(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 
+    // 1) Cargar mi userId cuando haya bearer
     LaunchedEffect(bearer) {
+        val b = bearer ?: run {
+            myUserId = null
+            return@LaunchedEffect
+        }
+
+        runCatching { RetrofitInstance.userApi.getCurrentUser(b) }
+            .onSuccess { me ->
+                myUserId = me.id
+            }
+            .onFailure { e ->
+                myUserId = null
+                snack("No se pudo cargar tu usuario: ${e.message ?: ""}")
+            }
+    }
+
+    // 2) Cargar solicitudes entrantes cuando sepamos miUserId
+    LaunchedEffect(bearer, myUserId) {
         val b = bearer ?: return@LaunchedEffect
-        viewModel.loadIncoming(b)
-        if (ui.results.isNotEmpty()) viewModel.hydrateStatesForResults(b)
+        val meId = myUserId ?: return@LaunchedEffect
+        viewModel.loadIncoming(bearer = b, myUserId = meId)
+    }
+
+    // 3) Hidratar estados cuando cambien los resultados (y tengamos bearer + miUserId)
+    LaunchedEffect(bearer, myUserId, ui.results) {
+        val b = bearer ?: return@LaunchedEffect
+        val meId = myUserId ?: return@LaunchedEffect
+        if (ui.results.isNotEmpty()) {
+            viewModel.hydrateStatesForResults(bearer = b, myUserId = meId)
+        }
     }
 
     Surface(
@@ -80,7 +99,12 @@ fun SocialScreen(
                 onValueChange = { search = it },
                 onSearch = {
                     viewModel.search(search)
-                    bearer?.let { b -> viewModel.hydrateStatesForResults(b) }
+
+                    val b = bearer
+                    val meId = myUserId
+                    if (b != null && meId != null) {
+                        viewModel.hydrateStatesForResults(bearer = b, myUserId = meId)
+                    }
                 }
             )
 
@@ -119,9 +143,12 @@ fun SocialScreen(
                             state = state,
                             onMainButtonClick = {
                                 val b = bearer ?: return@UserListItem
+                                val meId = myUserId ?: return@UserListItem
+
                                 viewModel.toggleFriendAction(
                                     userId = user.id,
                                     bearer = b,
+                                    myUserId = meId,
                                     onSnack = ::snack
                                 )
                             },
@@ -140,11 +167,13 @@ fun SocialScreen(
                 working = ui.workingIncoming,
                 onAccept = onAccept@ { fromUserId ->
                     val b = bearer ?: return@onAccept
-                    viewModel.acceptIncoming(fromUserId, b, ::snack)
+                    val meId = myUserId ?: return@onAccept
+                    viewModel.acceptIncoming(fromUserId = fromUserId, bearer = b, myUserId = meId, onSnack = ::snack)
                 },
                 onDecline = onDecline@ { fromUserId ->
                     val b = bearer ?: return@onDecline
-                    viewModel.declineIncoming(fromUserId, b, ::snack)
+                    val meId = myUserId ?: return@onDecline
+                    viewModel.declineIncoming(fromUserId = fromUserId, bearer = b, myUserId = meId, onSnack = ::snack)
                 }
             )
         }
@@ -177,7 +206,7 @@ private fun IncomingRequestsBanner(
             Column(Modifier.weight(1f)) {
                 Text(
                     text = "Solicitudes entrantes",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                    style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
                 )
                 Text(

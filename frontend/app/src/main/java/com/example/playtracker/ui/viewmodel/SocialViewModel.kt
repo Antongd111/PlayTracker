@@ -25,12 +25,15 @@ data class SocialUiState(
     val workingIncoming: Set<Int> = emptySet(),
 
     val results: List<User> = emptyList(),
-    val isSearching: Boolean = false
+    val isSearching: Boolean = false,
+
+    val outgoingFriendshipByUserId: Map<Int, Int> = emptyMap(),
+    val incomingFriendshipByUserId: Map<Int, Int> = emptyMap(),
+    val friendsFriendshipByUserId: Map<Int, Int> = emptyMap()
 )
 
 class SocialViewModel : ViewModel() {
 
-    // --- Dependencias internas ---
     private val users: UserRepository =
         UserRepositoryImpl(
             users = RetrofitInstance.userApi,
@@ -43,13 +46,14 @@ class SocialViewModel : ViewModel() {
     private val _ui = MutableStateFlow(SocialUiState())
     val ui: StateFlow<SocialUiState> = _ui
 
-    /** Buscar usuarios */
     fun search(query: String) = viewModelScope.launch {
         if (query.isBlank()) {
             _ui.update { it.copy(results = emptyList(), isSearching = false, error = null) }
             return@launch
         }
+
         _ui.update { it.copy(isSearching = true, error = null) }
+
         runCatching { users.searchUsers(query) }
             .onSuccess { list ->
                 _ui.update { curr ->
@@ -63,33 +67,51 @@ class SocialViewModel : ViewModel() {
             }
     }
 
-    /** Hidrata estados (amigos y OUTGOING) */
-    fun hydrateStatesForResults(bearer: String) = viewModelScope.launch {
+    fun hydrateStatesForResults(bearer: String, myUserId: Int) = viewModelScope.launch {
         val resultIds = _ui.value.results.map { it.id }
         if (resultIds.isEmpty()) return@launch
 
-        val friendsList = friends.listFriends(bearer).getOrElse { emptyList() }
-        val outgoing = friends.listOutgoing(bearer).getOrElse { emptyList() }
+        val friendsList = friends.listFriends(bearer = bearer, userId = myUserId).getOrElse { emptyList() }
+        val outgoing = friends.listOutgoing(bearer = bearer, userId = myUserId).getOrElse { emptyList() }
 
         _ui.update { curr ->
-            val next = curr.states.toMutableMap()
-            friendsList.forEach { f -> if (f.id in resultIds) next[f.id] = FriendState.FRIENDS }
-            outgoing.forEach { req ->
-                val otherId = req.otherUser.id
-                if (otherId in resultIds) next[otherId] = FriendState.PENDING_SENT
+            val nextStates = curr.states.toMutableMap()
+
+            val friendsMap = friendsList
+                .filter { it.friendshipId != null }
+                .associate { it.id to it.friendshipId!! }
+
+            friendsMap.keys.forEach { otherId ->
+                if (otherId in resultIds) nextStates[otherId] = FriendState.FRIENDS
             }
-            curr.copy(states = next)
+
+            val outMap = outgoing.associate { req ->
+                req.otherUser.id to req.friendshipId
+            }
+
+            outMap.keys.forEach { otherId ->
+                if (otherId in resultIds) nextStates[otherId] = FriendState.PENDING_SENT
+            }
+
+            curr.copy(
+                states = nextStates,
+                outgoingFriendshipByUserId = outMap,
+                friendsFriendshipByUserId = friendsMap
+            )
         }
     }
 
-    /** Carga solicitudes ENTRANTES */
-    fun loadIncoming(bearer: String) = viewModelScope.launch {
-        val inc = friends.listIncoming(bearer).getOrElse { emptyList() }
-        _ui.update { it.copy(incoming = inc) }
+    fun loadIncoming(bearer: String, myUserId: Int) = viewModelScope.launch {
+        val inc = friends.listIncoming(bearer = bearer, userId = myUserId).getOrElse { emptyList() }
+
+        val inMap = inc.associate { req ->
+            req.otherUser.id to req.friendshipId
+        }
+
+        _ui.update { it.copy(incoming = inc, incomingFriendshipByUserId = inMap) }
     }
 
-    /** Acción por usuario: send/cancel/unfriend */
-    fun toggleFriendAction(userId: Int, bearer: String, onSnack: (String) -> Unit) {
+    fun toggleFriendAction(userId: Int, bearer: String, myUserId: Int, onSnack: (String) -> Unit) {
         val current = _ui.value.states[userId] ?: FriendState.NONE
         if (_ui.value.workingFor.contains(userId)) return
 
@@ -97,8 +119,9 @@ class SocialViewModel : ViewModel() {
             _ui.update { it.copy(workingFor = it.workingFor + userId, error = null) }
 
             when (current) {
+
                 FriendState.NONE -> {
-                    friends.sendRequest(userId, bearer)
+                    friends.sendRequest(toUserId = userId, bearer = bearer)
                         .onSuccess {
                             _ui.update {
                                 it.copy(
@@ -106,44 +129,64 @@ class SocialViewModel : ViewModel() {
                                     states = it.states + (userId to FriendState.PENDING_SENT)
                                 )
                             }
+                            hydrateStatesForResults(bearer, myUserId)
                             onSnack("Solicitud enviada")
                         }
                         .onFailure { e ->
-                            hydrateStatesForResults(bearer)
                             _ui.update { it.copy(workingFor = it.workingFor - userId, error = e.message) }
                             onSnack("No se pudo enviar: ${e.message ?: ""}")
                         }
                 }
+
                 FriendState.PENDING_SENT -> {
-                    friends.cancelRequest(userId, bearer)
+                    val friendshipId = _ui.value.outgoingFriendshipByUserId[userId]
+                    if (friendshipId == null) {
+                        _ui.update { it.copy(workingFor = it.workingFor - userId) }
+                        onSnack("No tengo el id de la solicitud (refresca la lista)")
+                        hydrateStatesForResults(bearer, myUserId)
+                        return@launch
+                    }
+
+                    friends.deleteFriendship(friendshipId = friendshipId, bearer = bearer)
                         .onSuccess {
                             _ui.update {
                                 it.copy(
                                     workingFor = it.workingFor - userId,
-                                    states = it.states + (userId to FriendState.NONE)
+                                    states = it.states + (userId to FriendState.NONE),
+                                    outgoingFriendshipByUserId = it.outgoingFriendshipByUserId - userId
                                 )
                             }
                             onSnack("Solicitud cancelada")
                         }
                         .onFailure { e ->
-                            hydrateStatesForResults(bearer)
+                            hydrateStatesForResults(bearer, myUserId)
                             _ui.update { it.copy(workingFor = it.workingFor - userId, error = e.message) }
                             onSnack("No se pudo cancelar: ${e.message ?: ""}")
                         }
                 }
+
                 FriendState.FRIENDS -> {
-                    friends.unfriend(userId, bearer)
+                    val friendshipId = _ui.value.friendsFriendshipByUserId[userId]
+                    if (friendshipId == null) {
+                        _ui.update { it.copy(workingFor = it.workingFor - userId) }
+                        onSnack("No puedo borrar amistad: falta friendshipId (backend debe devolverlo)")
+                        hydrateStatesForResults(bearer, myUserId)
+                        return@launch
+                    }
+
+                    friends.deleteFriendship(friendshipId = friendshipId, bearer = bearer)
                         .onSuccess {
                             _ui.update {
                                 it.copy(
                                     workingFor = it.workingFor - userId,
-                                    states = it.states + (userId to FriendState.NONE)
+                                    states = it.states + (userId to FriendState.NONE),
+                                    friendsFriendshipByUserId = it.friendsFriendshipByUserId - userId
                                 )
                             }
                             onSnack("Amistad eliminada")
                         }
                         .onFailure { e ->
-                            hydrateStatesForResults(bearer)
+                            hydrateStatesForResults(bearer, myUserId)
                             _ui.update { it.copy(workingFor = it.workingFor - userId, error = e.message) }
                             onSnack("No se pudo eliminar: ${e.message ?: ""}")
                         }
@@ -152,21 +195,31 @@ class SocialViewModel : ViewModel() {
         }
     }
 
-    fun acceptIncoming(fromUserId: Int, bearer: String, onSnack: (String) -> Unit) {
+    fun acceptIncoming(fromUserId: Int, bearer: String, myUserId: Int, onSnack: (String) -> Unit) {
         viewModelScope.launch {
             _ui.update { it.copy(workingIncoming = it.workingIncoming + fromUserId) }
-            friends.accept(fromUserId, bearer)
+
+            val friendshipId = _ui.value.incomingFriendshipByUserId[fromUserId]
+            if (friendshipId == null) {
+                _ui.update { it.copy(workingIncoming = it.workingIncoming - fromUserId) }
+                onSnack("No tengo el id de la solicitud entrante (refresca)")
+                loadIncoming(bearer, myUserId)
+                return@launch
+            }
+
+            friends.accept(friendshipId = friendshipId, bearer = bearer)
                 .onSuccess {
                     _ui.update { curr ->
                         val newList = curr.incoming.filter { it.otherUser.id != fromUserId }
-                        val newStates = curr.states + (fromUserId to FriendState.FRIENDS)
                         curr.copy(
                             workingIncoming = curr.workingIncoming - fromUserId,
                             incoming = newList,
-                            states = newStates
+                            states = curr.states + (fromUserId to FriendState.FRIENDS),
+                            incomingFriendshipByUserId = curr.incomingFriendshipByUserId - fromUserId
                         )
                     }
                     onSnack("Solicitud aceptada")
+                    hydrateStatesForResults(bearer, myUserId)
                 }
                 .onFailure { e ->
                     _ui.update { it.copy(workingIncoming = it.workingIncoming - fromUserId, error = e.message) }
@@ -175,20 +228,31 @@ class SocialViewModel : ViewModel() {
         }
     }
 
-    fun declineIncoming(fromUserId: Int, bearer: String, onSnack: (String) -> Unit) {
+    fun declineIncoming(fromUserId: Int, bearer: String, myUserId: Int, onSnack: (String) -> Unit) {
         viewModelScope.launch {
             _ui.update { it.copy(workingIncoming = it.workingIncoming + fromUserId) }
-            friends.decline(fromUserId, bearer)
+
+            val friendshipId = _ui.value.incomingFriendshipByUserId[fromUserId]
+            if (friendshipId == null) {
+                _ui.update { it.copy(workingIncoming = it.workingIncoming - fromUserId) }
+                onSnack("No tengo el id de la solicitud entrante (refresca)")
+                loadIncoming(bearer, myUserId)
+                return@launch
+            }
+
+            friends.decline(friendshipId = friendshipId, bearer = bearer)
                 .onSuccess {
                     _ui.update { curr ->
                         val newList = curr.incoming.filter { it.otherUser.id != fromUserId }
                         curr.copy(
                             workingIncoming = curr.workingIncoming - fromUserId,
                             incoming = newList,
-                            states = curr.states + (fromUserId to FriendState.NONE)
+                            states = curr.states + (fromUserId to FriendState.NONE),
+                            incomingFriendshipByUserId = curr.incomingFriendshipByUserId - fromUserId
                         )
                     }
                     onSnack("Solicitud rechazada")
+                    hydrateStatesForResults(bearer, myUserId)
                 }
                 .onFailure { e ->
                     _ui.update { it.copy(workingIncoming = it.workingIncoming - fromUserId, error = e.message) }

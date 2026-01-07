@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Star
@@ -30,25 +31,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
 import com.example.playtracker.R
 import com.example.playtracker.data.local.datastore.UserPreferences
+import com.example.playtracker.data.remote.service.RetrofitInstance
 import com.example.playtracker.domain.model.Friend
 import com.example.playtracker.domain.model.UserGame
-import com.example.playtracker.ui.viewmodel.*
+import com.example.playtracker.ui.viewmodel.FriendState
+import com.example.playtracker.ui.viewmodel.UserViewModel
+import kotlinx.coroutines.launch
+
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import kotlinx.coroutines.launch
 
 @Composable
 fun UserScreen(
@@ -69,19 +70,34 @@ fun UserScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    var myUserId by remember { mutableStateOf<Int?>(null) }
+
+    fun snack(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+
     LaunchedEffect(userId, token) {
         viewModel.load(userId, token)
     }
 
-    fun snack(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(token) {
+        val b = bearer ?: run {
+            myUserId = null
+            return@LaunchedEffect
+        }
+
+        runCatching { RetrofitInstance.userApi.getCurrentUser(b) }
+            .onSuccess { me -> myUserId = me.id }
+            .onFailure { myUserId = null }
+    }
 
     when {
         ui.loading && ui.user == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
+
         ui.error != null && ui.user == null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Text(ui.error ?: "Error")
         }
+
         ui.user != null -> {
             val u = ui.user!!
 
@@ -125,21 +141,15 @@ fun UserScreen(
 
                         if (ui.isOwn) {
                             Row {
-                                // Editar perfil
                                 IconButton(onClick = { showEditDialog = true }) {
                                     Icon(Icons.Default.Edit, contentDescription = "Editar perfil")
                                 }
-                                // Cerrar sesión
+
                                 IconButton(
                                     onClick = {
                                         scope.launch {
-                                            // Limpia credenciales (token, userId, etc.)
                                             prefs.clear()
-
-                                            // Mensaje opcional
                                             Toast.makeText(context, "Sesión cerrada", Toast.LENGTH_SHORT).show()
-
-                                            // Navega a login y limpia el back stack del shell principal
                                             navController.navigate("login") {
                                                 popUpTo("main") { inclusive = true }
                                                 launchSingleTop = true
@@ -167,15 +177,23 @@ fun UserScreen(
                         Spacer(modifier = Modifier.weight(1f))
 
                         if (!ui.isOwn) {
+                            val canAct = !ui.workingFriend && bearer != null && myUserId != null
+
                             val (label, enabled) = when (ui.friendState) {
-                                FriendState.NONE -> "Seguir" to !ui.workingFriend
-                                FriendState.PENDING_SENT -> "Pendiente..." to !ui.workingFriend
-                                FriendState.FRIENDS -> "Amigos ✓" to !ui.workingFriend
+                                FriendState.NONE -> "Seguir" to canAct
+                                FriendState.PENDING_SENT -> "Pendiente..." to canAct
+                                FriendState.FRIENDS -> "Amigos ✓" to canAct
                             }
+
                             Button(
                                 onClick = {
                                     val b = bearer ?: return@Button snack("Necesitas iniciar sesión")
-                                    viewModel.toggleFriendAction(b)
+                                    val meId = myUserId ?: return@Button snack("No se pudo cargar tu usuario (reintenta)")
+                                    viewModel.toggleFriendAction(
+                                        bearer = b,
+                                        myUserId = meId,
+                                        onSnack = ::snack
+                                    )
                                 },
                                 enabled = enabled
                             ) {
@@ -240,6 +258,7 @@ fun UserScreen(
                                     }
                                 }
                             }
+
                             else -> {
                                 val fav = ui.favorite!!
                                 Card(
@@ -266,11 +285,10 @@ fun UserScreen(
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier
                                                 .fillMaxHeight()
-                                                .aspectRatio(1f) // cuadrada; quítalo si prefieres un rectángulo
+                                                .aspectRatio(1f)
                                                 .clip(RoundedCornerShape(topStart = 12.dp, bottomStart = 12.dp))
                                         )
 
-                                        // Contenido a la derecha
                                         Column(
                                             modifier = Modifier
                                                 .weight(1f)
@@ -307,7 +325,7 @@ fun UserScreen(
 
                         // --- Selector de estado + lista ---
                         val statusOptions = listOf("Por jugar", "Jugando", "Completado")
-                        var selectedIndex by rememberSaveable { mutableStateOf(2) } // por defecto "Completado"
+                        var selectedIndex by rememberSaveable { mutableStateOf(2) }
                         val selectedStatus = statusOptions[selectedIndex]
                         val filteredCount = remember(ui.userGames, selectedStatus) {
                             ui.userGames.count { it.status?.equals(selectedStatus, ignoreCase = true) == true }
@@ -505,6 +523,7 @@ fun UserScreen(
                             val b = bearer ?: return@EditProfileDialog Toast
                                 .makeText(context, "Necesitas iniciar sesión", Toast.LENGTH_SHORT)
                                 .show()
+
                             viewModel.updateProfile(newName, newStatus, b)
                             showEditDialog = false
                             Toast.makeText(context, "Perfil actualizado", Toast.LENGTH_SHORT).show()
@@ -593,7 +612,6 @@ private fun StarRowFrom100(
     }
 }
 
-
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun UserReviewsSection(
@@ -631,7 +649,7 @@ private fun UserReviewsCarousel(
     reviews: List<UserGame>,
     navController: NavController
 ) {
-    val reviewHeight = 200.dp // altura fija del hueco de reseñas
+    val reviewHeight = 200.dp
     val pagerState = rememberPagerState(initialPage = 0, pageCount = { reviews.size })
 
     LaunchedEffect(reviews.size) {
@@ -704,13 +722,11 @@ private fun UserReviewCard(
         tonalElevation = 2.dp,
         shadowElevation = 4.dp
     ) {
-        // Estructura en columna para fijar cabecera arriba y texto abajo
         Column(
             Modifier
                 .fillMaxSize()
                 .padding(12.dp)
         ) {
-            // Cabecera: imagen izquierda, título derecha y debajo las estrellas
             Row(
                 verticalAlignment = Alignment.Top,
                 modifier = Modifier.fillMaxWidth()
@@ -735,7 +751,6 @@ private fun UserReviewCard(
                         style = MaterialTheme.typography.titleMedium,
                         maxLines = 1
                     )
-                    // Puntuación del usuario (estrellas desde 0..100)
                     StarRowFrom100(score100 = ug.score, size = 20.dp)
                 }
             }
@@ -746,7 +761,6 @@ private fun UserReviewCard(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // Texto de la reseña ocupando el resto del alto disponible
             Text(
                 text = ug.notes.orEmpty(),
                 style = MaterialTheme.typography.bodySmall.copy(fontSize = 14.sp),

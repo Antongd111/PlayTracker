@@ -5,6 +5,7 @@ data class User(
     val name: String,
     val avatarUrl: String?,
     val status: String? = null,
-    val favoriteRawgId: Long? = null
+    val favoriteRawgId: Long? = null,
+    val friendshipId: Int? = null
 )
 

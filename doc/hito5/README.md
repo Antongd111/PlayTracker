@@ -1,4 +1,10 @@
 # Hito 5: Despliegue de la aplicación en Render
+
+**Servicio de backend desplegado (API docs):** https://playtracker-backend.onrender.com/docs
+
+---
+
+
 Para este hito, he decidido utilizar la PaaS **[Render](https://render.com/)** para el despliegue en la nube frente a otras soluciones IaaS/PaaS. Mi decisión ha sido esta tras valorar:
 
 - **Simplicidad en la configuración:** para el tipo de aplicación y la relativa simplicidad de su despliegue y configuración, he optado por elegir un PaaS que gestione de base toda la infraestructura. Podría haberlo montado perfectamente en cualquier IaaS, pero serían configuraciones innecesarias adicionales de las que he podido prescindir en un PaaS como Render.<br></br>
@@ -148,6 +154,17 @@ Una vez desplegados los servicios, podemos mirar los logs de cada despliegue, el
 Podemos observar también que el servicio se detiene tras un tiempo sin actividad. Esto es debido a la capa gratuita de Render, que detiene los servicios inactivos para ahorrar recursos.
 
 ## Monitorización y observabilidad
+Para añadir una monitorización adicional a la de Render, he barajado varias opciones. He intentado implementar monitorización con **Sentry**, pero he tenido problemas con la conexión con la aplicación y lo he descartado.
+
+Por otra parte, he intentado utilizar las herramientas de monitorización de Render, pero para mi sorpresa, son todas de pago, tanto las herramientas que ofrece el propio Render como la posibilidad de utilizar integraciones orgánicas con otras herramientas.
+
+![alt text](image-10.png)
+
+![alt text](image-11.png)
+
+Este es un problema que no contemplé en mi primer análisis de plataformas PaaS e IaaS, y que me habría hecho inclinarme por otro proveedor, como Google Cloud, donde me consta que, mientras no se sobrepase el límite de créditos gratuitos, ofrece monitorización básica integrada.
+
+Es por ello, que por falta de tiempo para implementar mi propio sistema de monitorización en el código, tendré que conformarme con los logs implementados en los anteriores hitos.
 
 ## Funcionamiento y pruebas de la aplicación tras el despliegue
 

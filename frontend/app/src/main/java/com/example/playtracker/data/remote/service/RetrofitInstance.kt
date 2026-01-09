@@ -7,7 +7,8 @@ import java.util.concurrent.TimeUnit
 
 object RetrofitInstance {
 //    private const val BASE_URL = "http://192.168.18.191:8000/"
-    private const val BASE_URL = "https://playtracker.antoniogalvezdel.dev/"
+//    private const val BASE_URL = "https://playtracker.antoniogalvezdel.dev/"
+    private const val BASE_URL = "https://playtracker-backend.onrender.com"
 
     // Cliente con timeouts aumentados
     private val client = OkHttpClient.Builder()
@@ -19,7 +20,7 @@ object RetrofitInstance {
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .client(client) // ⬅️ aquí lo añadimos
+            .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
     }

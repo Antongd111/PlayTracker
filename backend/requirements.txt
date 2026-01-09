@@ -35,3 +35,6 @@ pytest-dotenv
 pytest-sugar
 pytest-emoji
 pytest-clarity
+
+# Monitoreo y logging
+sentry-sdk==2.*

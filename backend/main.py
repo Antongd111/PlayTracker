@@ -1,35 +1,11 @@
 from app.api import friendships
 from fastapi import FastAPI, Request
-import os
 import time
-
-import sentry_sdk
-from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
-
 from app.core.init_db import init_db
 from app.api import users, user_games, auth, review, users_recommendations, user_friends, games
 from app.core.logger_config import get_logger
 
-
-# -----------------------------------------------------------------------------
-# Sentry (observabilidad: errores + performance/trazas)
-# -----------------------------------------------------------------------------
-SENTRY_DSN = os.getenv("SENTRY_DSN", "")
-
-if SENTRY_DSN:
-   sentry_sdk.init(
-      dsn=SENTRY_DSN,
-      environment=os.getenv("ENVIRONMENT", "production"),
-      release=os.getenv("RELEASE", "playtracker-backend"),
-      traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.2")),
-      profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.0")),
-   )
-
-
 app = FastAPI(title="PlayTracker API")
-
-if SENTRY_DSN:
-   app.add_middleware(SentryAsgiMiddleware)
 
 # Crear logger principal
 logger = get_logger(__name__)
@@ -37,29 +13,29 @@ logger = get_logger(__name__)
 # Middleware para registrar cada petición
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-   start_time = time.time()
-   logger.info(f"Petición entrante: {request.method} {request.url.path} desde {request.client.host}")
+    start_time = time.time()
+    logger.info(f"Petición entrante: {request.method} {request.url.path} desde {request.client.host}")
 
-   try:
-      response = await call_next(request)
-   except Exception as e:
-      logger.exception(f"Error procesando {request.method} {request.url.path}: {e}")
-      raise
+    try:
+        response = await call_next(request)
+    except Exception as e:
+        logger.exception(f"Error procesando {request.method} {request.url.path}: {e}")
+        raise
 
-   duration = (time.time() - start_time) * 1000
-   logger.info(f"Respuesta: {request.method} {request.url.path} -> {response.status_code} ({duration:.2f} ms)")
-   return response
+    duration = (time.time() - start_time) * 1000
+    logger.info(f"Respuesta: {request.method} {request.url.path} -> {response.status_code} ({duration:.2f} ms)")
+    return response
 
 # Eventos de inicio y apagado
 @app.on_event("startup")
 async def startup():
-   logger.info("Iniciando PlayTracker API...")
-   await init_db()
-   logger.info("Base de datos inicializada correctamente.")
+    logger.info("Iniciando PlayTracker API...")
+    await init_db()
+    logger.info("Base de datos inicializada correctamente.")
 
 @app.on_event("shutdown")
 async def shutdown():
-   logger.info("Apagando PlayTracker API...")
+    logger.info("Apagando PlayTracker API...")
 
 # Rutas
 app.include_router(users.router)
@@ -73,14 +49,10 @@ app.include_router(user_friends.users_friends_router)
 
 @app.get("/health", status_code=200, tags=["health"])
 async def health():
-   logger.info("Health check requested")
-   return {"status": "ok"}
-
-@app.get("/debug-sentry")
-def debug_sentry():
-   1 / 0
+    logger.info("Health check requested")
+    return {"status": "ok"}
 
 @app.get("/")
 def root():
-   logger.info("Ruta raíz accedida")
-   return {"message": "PlayTracker API"}
+    logger.info("Ruta raíz accedida")
+    return {"message": "PlayTracker API"}

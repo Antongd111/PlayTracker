@@ -164,7 +164,7 @@ Por otra parte, he intentado utilizar las herramientas de monitorización de Ren
 
 Este es un problema que no contemplé en mi primer análisis de plataformas PaaS e IaaS, y que me habría hecho inclinarme por otro proveedor, como Google Cloud, donde me consta que, mientras no se sobrepase el límite de créditos gratuitos, ofrece monitorización básica integrada.
 
-Es por ello, que por falta de tiempo para implementar mi propio sistema de monitorización en el código, tendré que conformarme con los logs implementados en los anteriores hitos.
+Como la monitorización del uso de CPU, memoria y tráfico no es medible desde código, sino que depende de la plataforma de despliegue, no tengo monitorización más allá de los logs implementados en hitos anteriores.
 
 ## Funcionamiento y pruebas de la aplicación tras el despliegue
 

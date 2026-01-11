@@ -31,6 +31,7 @@ La documentación específica al desarrollo de los hitos de la asignatura está 
 2. [Integración Continua](doc/hito2/README.md)
 3. [Diseño en microservicios](doc/hito3/README.md)
 4. [Composición de servicios](doc/hito4/README.md)
+5. [Despliegue en la nube](doc/hito5/README.md)
 
 ## Licencia
 Este proyecto está bajo la licencia MIT.  
